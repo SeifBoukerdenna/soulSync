@@ -12,4 +12,5 @@ export const Colors = {
   salmon: '#FFAFCC',
   blue: '#A2D2FF',
   paleBlue: '#BDE0FE',
+  lightPurple: 'rgba(55, 44, 65, 0.85)',
 };

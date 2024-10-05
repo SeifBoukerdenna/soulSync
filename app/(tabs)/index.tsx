@@ -1,7 +1,7 @@
 import Star from '@/components/stars/Star';
 import { generateStars, getGradientColors, StarData } from '@/components/stars/utils';
 import { delayBetweenShootingStars } from '@/constants/StarsConstants';
-import useStarsStore from '@/stores/usestarsStore';
+import useStarsStore from '@/stores/useStarsStore';
 import useZenModeStore from '@/stores/useZenModeStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useEffect, useMemo } from 'react';
