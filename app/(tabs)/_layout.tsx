@@ -2,9 +2,12 @@
 import { Tabs } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors'; // Assuming you have a Colors file
-import { Platform } from 'react-native';
+import useZenModeStore from '@/stores/useZenModeStore';
+
 
 export default function TabsLayout() {
+  const { isZenMode } = useZenModeStore();
+
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -28,9 +31,12 @@ export default function TabsLayout() {
 
           return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={size} color={color} />;
         },
+        // tabBarVisible: !isZenMode,
         tabBarActiveTintColor: Colors.blue,
         tabBarInactiveTintColor: '#A8A8A8',
         tabBarStyle: {
+          opacity: isZenMode ? 0.1 : 1,
+          // opacity: 0,
           backgroundColor: 'rgba(55, 44, 65, 0.85)',
           position: 'absolute',
           left: 15,

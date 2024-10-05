@@ -1,18 +1,19 @@
 import Star from '@/components/stars/Star';
 import { generateStars, getGradientColors, StarData } from '@/components/stars/utils';
 import { delayBetweenShootingStars } from '@/constants/StarsConstants';
-import useStarsStore from '@/stores/starStore';
+import useStarsStore from '@/stores/usestarsStore';
+import useZenModeStore from '@/stores/useZenModeStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Button, StyleSheet, Text } from 'react-native';
+import { Button, StyleSheet, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function StarsScreen() {
-  const { numberOfStars } = useStarsStore(); // Get numberOfStars from Zustand
+  const { numberOfStars } = useStarsStore();
+  const { isZenMode, setZenMode, longPressDuration } = useZenModeStore();
   const [shootingStarIndex, setShootingStarIndex] = useState<number | null>(null);
   const [gradientColors, setGradientColors] = useState<[string, string]>(getGradientColors());
 
-  // Memoize stars so they are only recalculated when numberOfStars changes
   const stars = useMemo(() => generateStars(numberOfStars), [numberOfStars]);
 
   useEffect(() => {
@@ -45,10 +46,10 @@ export default function StarsScreen() {
     }
   };
 
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
-
       {stars.map((star, index) => (
         <Star
           key={index}
