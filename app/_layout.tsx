@@ -1,10 +1,9 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
+// app/_layout.tsx
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,12 +23,8 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={
-      {
-        headerShown: false,
-      }
-    }>
-      {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> */}
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

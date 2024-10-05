@@ -1,20 +1,21 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet } from 'react-native';
+import { Animated, Easing, StyleSheet } from 'react-native';
 import { Dimensions } from 'react-native';
 import { StarData } from './utils';
 
 const { width, height } = Dimensions.get('window');
 
-
 export type StarProps = StarData & {
     onShootingComplete?: (newX: number, newY: number) => void;
 };
-
 
 const Star = ({ x, y, size, isShootingStar, onShootingComplete }: StarProps) => {
     const animation = useRef(new Animated.Value(1)).current;
     const shootingStarX = useRef(new Animated.Value(x)).current;
     const shootingStarY = useRef(new Animated.Value(y)).current;
+
+    const finalXRef = useRef(x);
+    const finalYRef = useRef(y);
 
     useEffect(() => {
         const twinkle = Animated.loop(
@@ -37,16 +38,38 @@ const Star = ({ x, y, size, isShootingStar, onShootingComplete }: StarProps) => 
             const finalX = Math.random() * width;
             const finalY = Math.random() * height;
 
+            const midX = (x + finalX) / 2 + (Math.random() * 100 - 50);
+            const midY = (y + finalY) / 2 + (Math.random() * 100 - 50);
+
+            finalXRef.current = finalX;
+            finalYRef.current = finalY;
+
             const shoot = Animated.sequence([
                 Animated.parallel([
                     Animated.timing(shootingStarX, {
+                        toValue: midX,
+                        duration: 500 + Math.random() * 300,
+                        easing: Easing.inOut(Easing.sin),
+                        useNativeDriver: false,
+                    }),
+                    Animated.timing(shootingStarY, {
+                        toValue: midY,
+                        duration: 500 + Math.random() * 300,
+                        easing: Easing.inOut(Easing.sin),
+                        useNativeDriver: false,
+                    }),
+                ]),
+                Animated.parallel([
+                    Animated.timing(shootingStarX, {
                         toValue: finalX,
-                        duration: 1000,
+                        duration: 700 + Math.random() * 300,
+                        easing: Easing.out(Easing.quad),
                         useNativeDriver: false,
                     }),
                     Animated.timing(shootingStarY, {
                         toValue: finalY,
-                        duration: 1000,
+                        duration: 700 + Math.random() * 300,
+                        easing: Easing.out(Easing.quad),
                         useNativeDriver: false,
                     }),
                 ]),
@@ -54,7 +77,7 @@ const Star = ({ x, y, size, isShootingStar, onShootingComplete }: StarProps) => 
 
             shoot.start(() => {
                 if (onShootingComplete) {
-                    onShootingComplete(finalX, finalY);
+                    onShootingComplete(finalXRef.current, finalYRef.current);
                 }
             });
         }
