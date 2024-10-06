@@ -39,6 +39,7 @@ const MediaGrid: React.FC<MediaGridProps> = ({ mediaList }) => {
 
     return (
         <FlatList
+            showsVerticalScrollIndicator={false}
             data={mediaRows}
             keyExtractor={(_, index) => index.toString()}
             renderItem={({ item: row }) => (
