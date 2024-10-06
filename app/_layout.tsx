@@ -1,12 +1,15 @@
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState, useRef } from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import 'react-native-reanimated';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useZenModeStore from '@/stores/useZenModeStore';
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const { isZenMode, setZenMode, longPressDuration } = useZenModeStore();
@@ -36,22 +39,24 @@ export default function RootLayout() {
   }
 
   return (
-    <Pressable
-      onLongPress={handleLongPress}
-      delayLongPress={longPressDuration}
-      style={styles.pressableContainer}
-    >
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Pressable
+        onLongPress={handleLongPress}
+        delayLongPress={longPressDuration}
+        style={styles.pressableContainer}
+      >
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
 
-      {showMessage && (
-        <View style={styles.messageContainer}>
-          <Text style={styles.messageText}>{showMessage}</Text>
-        </View>
-      )}
-    </Pressable>
+        {showMessage && (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageText}>{showMessage}</Text>
+          </View>
+        )}
+      </Pressable>
+    </QueryClientProvider>
   );
 }
 
