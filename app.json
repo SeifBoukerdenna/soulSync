@@ -16,7 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.elmelz.soulSync-app",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to allow you to upload images."
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to upload photos."
       }
     },
     "android": {
