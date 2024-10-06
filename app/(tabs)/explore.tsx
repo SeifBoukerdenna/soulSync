@@ -1,122 +1,94 @@
-import React, { useState } from 'react';
-import { View, Text, Button, Image, FlatList, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { Button, Image, View, StyleSheet, Alert, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '@/lib/supabase';
+import * as FileSystem from 'expo-file-system';
 
+export default function S3ImageUploader() {
+    const [image, setImage] = useState<string | null>(null);
+    const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-type FileObject = {
-    name: string;
-    // Add any other properties that Supabase returns for the file objects
-};
-
-
-const Explore = () => {
-    const [media, setMedia] = useState<FileObject[]>([]);
-    const [uploading, setUploading] = useState(false);
-
-    const pickMedia = async () => {
-        // Ask for permission to access media library
-        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permissionResult.granted) {
-            alert('Permission to access media is required!');
-            return;
-        }
-
-        // Open media picker
+    const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
             allowsEditing: true,
+            aspect: [4, 3],
             quality: 1,
         });
 
         if (!result.canceled) {
-            uploadMedia(result.assets[0].uri);
+            const pickedImageUri = result.assets[0].uri;
+            setImage(pickedImageUri);
+            await uploadImageToS3(pickedImageUri);
         }
     };
 
-    const uploadMedia = async (uri: string) => {
+    const uploadImageToS3 = async (uri: string) => {
         try {
-            setUploading(true);
+            const fileName = uri.split('/').pop(); // Extract file name
+            const fileType = fileName?.split('.').pop(); // Get file extension
 
-            // Convert media to a blob for uploading
-            const response = await fetch(uri);
-            const blob = await response.blob();
+            // Read the file as binary data (not base64)
+            const fileContent = await FileSystem.readAsStringAsync(uri, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
 
-            // Create a unique file name and upload it to Supabase
-            const fileName = uri.split('/').pop() ?? 'media';
-            const { error } = await supabase.storage.from('media').upload(fileName, blob);
+            // Convert the base64 string back to a binary buffer
+            const binaryData = Buffer.from(fileContent, 'base64');
 
-            if (error) {
-                console.log(error);
-                alert('Error uploading media');
+            // Directly specify the correct upload URL (no JSON.stringify)
+            const uploadUrl = `https://${process.env.EXPO_PUBLIC_S3_ENDPOINT}/uploads/${fileName}`;
+            console.log('Upload URL:', uploadUrl);
+
+            // Send a PUT request with binary data in the body
+            const responseUpload = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: binaryData, // Send the binary data directly
+                headers: {
+                    'Content-Type': `image/${fileType}`,
+                    'x-amz-acl': 'public-read', // Optional: make the uploaded file public
+                },
+            });
+
+            if (responseUpload.ok) {
+                const uploadedUrl = `https://jcrvqjrfsukthnzqgxfl.supabase.co/storage/v1/object/public/uploads/${fileName}`;
+                setUploadedImage(uploadedUrl); // Save the uploaded image URL
+                Alert.alert('Success', 'Image uploaded successfully');
             } else {
-                fetchMedia();
+                throw new Error(`Failed to upload image: ${responseUpload.statusText}`);
             }
         } catch (error) {
-            console.error('Upload error:', error);
-        } finally {
-            setUploading(false);
-        }
-    };
-
-
-    const fetchMedia = async () => {
-        // Fetch the list of media files from the storage
-        const { data, error } = await supabase.storage.from('media').list();
-        if (error) {
-            console.log(error);
-        } else {
-            setMedia(data);
-        }
-    };
-
-    const renderMediaItem = ({ item }: { item: FileObject }) => {
-        const mediaUrl = `${supabase.storage.from('media').getPublicUrl(item.name).data.publicUrl}`;
-        if (item.name.endsWith('.mp4') || item.name.endsWith('.mov')) {
-            return (
-                <View style={styles.mediaContainer}>
-                    <Text>Video: {item.name}</Text>
-                    {/* You can use Video component here */}
-                </View>
-            );
-        } else {
-            return (
-                <Image source={{ uri: mediaUrl }} style={styles.image} />
-            );
+            console.error('Error uploading image:', error);
+            Alert.alert('Error', 'Failed to upload image.');
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Hello, World!</Text>
-            <Button title={uploading ? "Uploading..." : "Pick Image/Video"} onPress={pickMedia} />
-            <FlatList
-                data={media}
-                renderItem={renderMediaItem}
-                keyExtractor={(item) => item.name}
-                numColumns={2}
-            />
+            <Button title="Pick an image from camera roll" onPress={pickImage} />
+            {image && <Image source={{ uri: image }} style={styles.image} />}
+            {uploadedImage && (
+                <View style={styles.uploadedContainer}>
+                    <Text>Uploaded Image:</Text>
+                    <Image source={{ uri: uploadedImage }} style={styles.image} />
+                </View>
+            )}
         </View>
     );
-};
+}
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
-    },
-    text: {
-        fontSize: 20,
+        justifyContent: 'center',
     },
     image: {
-        width: 100,
-        height: 100,
-        margin: 10,
+        width: 200,
+        height: 200,
+        marginTop: 20,
     },
-    mediaContainer: {
-        margin: 10,
+    uploadedContainer: {
+        marginTop: 20,
+        alignItems: 'center',
     },
 });
-
-export default Explore;

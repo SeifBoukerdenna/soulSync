@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://jcrvqjrfsukthnzqgxfl.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_KEY;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY;
 
 if (!supabaseAnonKey) {
   throw new Error('Missing env.SUPABASE_KEY');
