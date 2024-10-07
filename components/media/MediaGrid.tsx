@@ -1,35 +1,46 @@
 import React, { useState, useMemo } from 'react';
-import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity } from 'react-native';
-import CustomModal from '@/components/misc/CustomModal';
-import { useDeleteMedia } from '@/hooks/useDeleteMedia';
+import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert } from 'react-native';
 import useZenModeStore from '@/stores/useZenModeStore';
+import CustomModal from '../misc/CustomModal';
+import { useDeleteMedia } from '@/hooks/useDeleteMedia';
+import Modal from 'react-native-modal';
+import { PanGestureHandler } from 'react-native-gesture-handler';
+import { useFetchMedia } from '@/hooks/useFetchMedia';
 
 interface MediaGridProps {
     mediaList: string[];
     refetchMedia: () => void;
+    isSelectionMode: boolean;
+    selectedItems: string[];
+    onSelectItem: (uri: string) => void;
 }
 
-const MediaGrid: React.FC<MediaGridProps> = ({ mediaList, refetchMedia }) => {
-    const { isZenMode } = useZenModeStore(); // Access Zen Mode state here
+const MediaGrid = ({
+    mediaList,
+    refetchMedia,
+    isSelectionMode,
+    selectedItems,
+    onSelectItem,
+}: MediaGridProps) => {
+    const { isZenMode } = useZenModeStore();
+    const { deleteMedia } = useDeleteMedia();
+    const { refetch } = useFetchMedia();
 
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [pressedImage, setPressedImage] = useState<string | null>(null);
-
-    const { deleteMedia } = useDeleteMedia();
+    const [isFullScreen, setFullScreen] = useState(false);
 
     const screenWidth = Dimensions.get('window').width;
-    const imageMargin = 5; // Adjust margin value
+    const imageMargin = 5;
 
-    // Adjust the probability to make rows with 2 or 3 images more common
     const getRandomImageCount = () => {
         const randomValue = Math.random();
         if (randomValue < 0.15) {
-            return 1; // 15% chance of a row with 1 image
+            return 1;
         } else if (randomValue < 0.5) {
-            return 2; // 45% chance of a row with 2 images
+            return 2;
         } else {
-            return 3; // 40% chance of a row with 3 images
+            return 3;
         }
     };
 
@@ -37,8 +48,7 @@ const MediaGrid: React.FC<MediaGridProps> = ({ mediaList, refetchMedia }) => {
         const rows: string[][] = [];
         let currentRow: string[] = [];
         mediaList.forEach((item, index) => {
-            const imageCount = getRandomImageCount(); // Random number based on the weighted probability
-
+            const imageCount = getRandomImageCount();
             if (currentRow.length === 0) {
                 currentRow.push(item);
             } else if (currentRow.length < imageCount) {
@@ -50,45 +60,70 @@ const MediaGrid: React.FC<MediaGridProps> = ({ mediaList, refetchMedia }) => {
                 currentRow = [];
             }
         });
-
         return rows;
     };
 
     const mediaRows = useMemo(() => getMediaRows(mediaList), [mediaList]);
 
-    const handleLongPress = (imageUri: string) => {
-        setSelectedImage(imageUri);
-        setModalVisible(true);
+    const handleLongPress = (uri: string) => {
+        if (!isSelectionMode) {
+            setSelectedImage(uri);
+            setModalVisible(true);
+        }
+    };
+
+    const handlePress = (uri: string) => {
+        if (isSelectionMode) {
+            onSelectItem(uri);
+        } else {
+            setSelectedImage(uri);
+            setFullScreen(true);
+        }
+    };
+
+    const handleCancelModal = () => {
+        setModalVisible(false);
+        setSelectedImage(null);
     };
 
     const handleDeleteImage = async () => {
         if (selectedImage) {
-            await deleteMedia(selectedImage, refetchMedia);
-            setModalVisible(false);
+            try {
+                await deleteMedia(selectedImage, refetch);
+
+                handleCancelModal();
+            } catch (error) {
+                console.error('Error deleting image:', error);
+                Alert.alert('Error', 'There was a problem deleting the image.');
+            }
         }
     };
 
-    const renderFlatList = useMemo(() => {
-        return (
+    const handleSwipeClose = () => {
+        setFullScreen(false);
+        setSelectedImage(null);
+    };
+
+    return (
+        <>
             <FlatList
                 showsVerticalScrollIndicator={false}
                 data={mediaRows}
-                contentContainerStyle={styles.contentContainer} // Add padding to ensure images align properly
+                contentContainerStyle={styles.contentContainer}
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item: row }) => {
-                    const totalMarginSpace = (row.length - 1) * imageMargin; // Margin between images
+                    const totalMarginSpace = (row.length - 1) * imageMargin;
                     const imageWidth = row.length === 1
-                        ? screenWidth - imageMargin * 2 // Full width for a single image
-                        : (screenWidth - totalMarginSpace - imageMargin * 2) / row.length; // Dynamically calculate width for each image in a row with multiple images
+                        ? screenWidth - imageMargin * 2
+                        : (screenWidth - totalMarginSpace - imageMargin * 2) / row.length;
 
                     return (
                         <View style={styles.rowContainer}>
                             {row.map((item, index) => (
                                 <TouchableOpacity
                                     key={index}
+                                    onPress={() => handlePress(item)}
                                     onLongPress={() => handleLongPress(item)}
-                                    onPressIn={() => setPressedImage(item)} // Set the pressed image on press
-                                    onPressOut={() => setPressedImage(null)} // Clear the pressed image when the press is released
                                     activeOpacity={0.8}
                                 >
                                     <Image
@@ -96,14 +131,11 @@ const MediaGrid: React.FC<MediaGridProps> = ({ mediaList, refetchMedia }) => {
                                         style={[
                                             styles.image,
                                             {
-                                                width: imageWidth, // Dynamically calculated width
-                                                marginRight: index !== row.length - 1 ? imageMargin : 0, // No margin on the right for the last image
+                                                width: imageWidth,
+                                                marginRight: index !== row.length - 1 ? imageMargin : 0,
+                                                borderColor: selectedItems.includes(item) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
+                                                borderWidth: selectedItems.includes(item) ? 3 : 0,
                                             },
-                                            pressedImage === item && {
-                                                borderWidth: 3,
-                                                borderColor: isZenMode ? '#8BC34A' : '#007AFF',
-                                                opacity: 0.8,
-                                            }, // Dynamically apply the pressed style based on Zen Mode
                                         ]}
                                     />
                                 </TouchableOpacity>
@@ -112,20 +144,35 @@ const MediaGrid: React.FC<MediaGridProps> = ({ mediaList, refetchMedia }) => {
                     );
                 }}
             />
-        );
-    }, [mediaRows, screenWidth, pressedImage, isZenMode]);
-
-    return (
-        <View>
-            {renderFlatList}
 
             <CustomModal
                 isVisible={isModalVisible}
                 imageUrl={selectedImage}
-                onCancel={() => setModalVisible(false)}
+                onCancel={handleCancelModal}
                 onDelete={handleDeleteImage}
             />
-        </View>
+
+            <Modal
+                isVisible={isFullScreen}
+                style={styles.fullScreenModal}
+                onBackdropPress={handleSwipeClose}
+                onSwipeComplete={handleSwipeClose}
+                swipeDirection={['down', 'up']}
+                backdropOpacity={1}
+            >
+                <PanGestureHandler onGestureEvent={handleSwipeClose}>
+                    <View style={styles.fullScreenContainer}>
+                        {selectedImage && (
+                            <Image
+                                source={{ uri: selectedImage }}
+                                style={styles.fullScreenImage}
+                                resizeMode="contain"
+                            />
+                        )}
+                    </View>
+                </PanGestureHandler>
+            </Modal>
+        </>
     );
 };
 
@@ -142,6 +189,19 @@ const styles = StyleSheet.create({
         height: 250,
         resizeMode: 'cover',
         borderRadius: 10,
+    },
+    fullScreenModal: {
+        margin: 0,
+    },
+    fullScreenContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#000',
+    },
+    fullScreenImage: {
+        width: '100%',
+        height: '100%',
     },
 });
 

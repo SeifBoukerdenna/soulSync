@@ -6,6 +6,7 @@ import { Pressable, View, Text, StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useZenModeStore from '@/stores/useZenModeStore';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,24 +40,26 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Pressable
-        onLongPress={handleLongPress}
-        delayLongPress={longPressDuration}
-        style={styles.pressableContainer}
-      >
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <Pressable
+          onLongPress={handleLongPress}
+          delayLongPress={longPressDuration}
+          style={styles.pressableContainer}
+        >
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
 
-        {showMessage && (
-          <View style={styles.messageContainer}>
-            <Text style={styles.messageText}>{showMessage}</Text>
-          </View>
-        )}
-      </Pressable>
-    </QueryClientProvider>
+          {showMessage && (
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>{showMessage}</Text>
+            </View>
+          )}
+        </Pressable>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchMedia } from '@/hooks/useFetchMedia';
@@ -11,15 +11,19 @@ import MediaGrid from '@/components/media/MediaGrid';
 import ProgressBar from '@/components/misc/ProgressBar';
 import useMediaStore from '@/stores/useMediaStore';
 import { shuffleArray } from '@/utils/shuffleArray';
+import { useDeleteMedia } from '@/hooks/useDeleteMedia';
 
 const ExploreScreen = () => {
     const { data: mediaList, isLoading, refetch } = useFetchMedia();
     const { isZenMode } = useZenModeStore();
     const { numberOfMediaItems } = useMediaStore();
+    const { deleteMedia } = useDeleteMedia();
 
     const [progress, setProgress] = useState(0);
     const [shuffledMedia, setShuffledMedia] = useState<string[]>([]);
     const [gridKey, setGridKey] = useState(0);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
     const shuffleAndSetMedia = useCallback((media: string[]) => {
         const shuffled = shuffleArray([...media]);
@@ -56,6 +60,51 @@ const ExploreScreen = () => {
         }
     }, [refetch, shuffleAndSetMedia, mediaList]);
 
+    const handleDeleteSelected = async () => {
+        if (selectedItems.length === 0) {
+            Alert.alert('No Selection', 'Please select items to delete.');
+            return;
+        }
+
+        const confirmed = await new Promise(resolve => {
+            Alert.alert(
+                'Delete Selected Photos',
+                'Are you sure you want to delete the selected photos?',
+                [
+                    { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
+                    { text: 'Delete', onPress: () => resolve(true), style: 'destructive' }
+                ],
+                { cancelable: true }
+            );
+        });
+
+        if (confirmed) {
+            for (const uri of selectedItems) {
+                await deleteMedia(uri, refetch);
+            }
+            setSelectedItems([]);
+            setIsSelectionMode(false);
+        }
+    };
+
+    const handleSelectionModeToggle = () => {
+        setIsSelectionMode(!isSelectionMode);
+        setSelectedItems([]);
+    };
+
+    const handleCancelSelection = () => {
+        setSelectedItems([]);
+        setIsSelectionMode(false);
+    };
+
+    const handleSelectItem = (uri: string) => {
+        if (selectedItems.includes(uri)) {
+            setSelectedItems(selectedItems.filter(item => item !== uri));
+        } else {
+            setSelectedItems([...selectedItems, uri]);
+        }
+    };
+
     useEffect(() => {
         if (progress === 100) {
             const timer = setTimeout(() => {
@@ -75,9 +124,12 @@ const ExploreScreen = () => {
                 key={gridKey}
                 mediaList={limitedMediaList || []}
                 refetchMedia={refetch}
+                isSelectionMode={isSelectionMode}
+                selectedItems={selectedItems}
+                onSelectItem={handleSelectItem}
             />
         );
-    }, [limitedMediaList, isLoading, refetch, gridKey]);
+    }, [limitedMediaList, isLoading, refetch, gridKey, isSelectionMode, selectedItems]);
 
     return (
         <SafeAreaView style={[styles.container, isZenMode && styles.zenMode]}>
@@ -92,14 +144,45 @@ const ExploreScreen = () => {
                         style={[styles.uploadButton, isZenMode && styles.zenModeButton]}
                     >
                         <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+                        <Text style={styles.uploadButtonText}>Upload</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={handleRefetchMedia}
-                        style={[styles.refetchButton, isZenMode && styles.zenModeButton]}
+                        style={[styles.uploadButton, isZenMode && styles.zenModeButton]}
                     >
                         <Ionicons name="refresh-outline" size={20} color="#fff" />
+                        <Text style={styles.uploadButtonText}>Refresh</Text>
                     </TouchableOpacity>
+                </View>
+
+                <View style={styles.selectButtonContainer}>
+                    {isSelectionMode ? (
+                        <>
+                            <TouchableOpacity
+                                onPress={handleDeleteSelected}
+                                style={[styles.deleteButton, isZenMode && styles.zenModeButton]}
+                            >
+                                <Ionicons name="trash-outline" size={20} color="#fff" />
+                                <Text style={styles.uploadButtonText}>Delete</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleCancelSelection}
+                                style={[styles.cancelButton, isZenMode && styles.zenModeButton]}
+                            >
+                                <Ionicons name="close-outline" size={20} color="#fff" />
+                                <Text style={styles.uploadButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={handleSelectionModeToggle}
+                            style={[styles.selectButton, isZenMode && styles.zenModeButton]}
+                        >
+                            <Ionicons name="checkbox-outline" size={20} color="#fff" />
+                            <Text style={styles.uploadButtonText}>Select</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
 
@@ -143,42 +226,82 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
     },
+    selectButtonContainer: {
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+        gap: 10,
+    },
     uploadButton: {
         backgroundColor: '#007AFF',
         flexDirection: 'row',
-        padding: 12,
-        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 10,
         alignItems: 'center',
-        flex: 0.45,
         justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 5,
+        shadowRadius: 4,
         elevation: 3,
+        flex: 0.45,
     },
-    refetchButton: {
+    selectButton: {
+        backgroundColor: '#34C759',
+        flexDirection: 'row',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        flex: 0.45,
+    },
+    deleteButton: {
         backgroundColor: '#FF3B30',
         flexDirection: 'row',
-        padding: 12,
-        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 10,
         alignItems: 'center',
-        flex: 0.45,
         justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 5,
+        shadowRadius: 4,
         elevation: 3,
+        flex: 0.45,
+    },
+    cancelButton: {
+        backgroundColor: '#FF9500', // Orange for cancel
+        flexDirection: 'row',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        flex: 0.45,
     },
     zenModeButton: {
-        backgroundColor: '#8BC34A',
+        backgroundColor: '#34C759',
     },
     uploadButtonText: {
         color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 8,
+        fontSize: 15,
+        fontWeight: '500',
+        marginLeft: 6,
     },
 });
 
