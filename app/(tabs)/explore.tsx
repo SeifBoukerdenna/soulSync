@@ -18,9 +18,8 @@ export interface MediaItem {
     type: 'image' | 'video';
 }
 
-
 const ExploreScreen = () => {
-    const { data: mediaList, isLoading, refetch } = useFetchMedia();
+    const { data: mediaList, isLoading, isFetching, refetch } = useFetchMedia();
     const { isZenMode } = useZenModeStore();
     const { numberOfMediaItems } = useMediaStore();
     const { deleteMedia } = useDeleteMedia();
@@ -31,8 +30,8 @@ const ExploreScreen = () => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-    const shuffleAndSetMedia = useCallback((media: MediaItem[]) => { // Accept MediaItem[]
-        const shuffled = shuffleArray(media); // Shuffle the MediaItem array
+    const shuffleAndSetMedia = useCallback((media: MediaItem[]) => {
+        const shuffled = shuffleArray(media);
         setShuffledMedia(shuffled);
         setGridKey(prevKey => prevKey + 1);
     }, []);
@@ -47,7 +46,6 @@ const ExploreScreen = () => {
         return shuffledMedia?.slice(0, numberOfMediaItems);
     }, [shuffledMedia, numberOfMediaItems]);
 
-
     const handlePickAndUploadMedia = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -58,15 +56,11 @@ const ExploreScreen = () => {
             const { uri, type } = result.assets[0];
             const isVideo = type === 'video';
 
-            // Start the upload and refetch media asynchronously
             await useUploadMedia(uri, isVideo, () => {
-                // Refetch the media after the upload is completed
                 refetch();
             }, setProgress);
         }
     };
-
-
 
     const handleRefetchMedia = useCallback(async () => {
         await refetch();
@@ -131,7 +125,7 @@ const ExploreScreen = () => {
     }, [progress]);
 
     const mediaGrid = useMemo(() => {
-        if (isLoading) {
+        if (isLoading || isFetching) {
             return <LoadingSpinner />;
         }
         return (
@@ -144,7 +138,7 @@ const ExploreScreen = () => {
                 onSelectItem={handleSelectItem}
             />
         );
-    }, [limitedMediaList, isLoading, refetch, gridKey, isSelectionMode, selectedItems]);
+    }, [limitedMediaList, isLoading, isFetching, refetch, gridKey, isSelectionMode, selectedItems]);
 
     return (
         <SafeAreaView style={[styles.container, isZenMode && styles.zenMode]}>
@@ -205,6 +199,11 @@ const ExploreScreen = () => {
 
             <View style={styles.gridContainer}>
                 {mediaGrid}
+                {isFetching && (
+                    <View style={styles.loadingOverlay}>
+                        <LoadingSpinner />
+                    </View>
+                )}
             </View>
         </SafeAreaView>
     );
@@ -295,7 +294,7 @@ const styles = StyleSheet.create({
         flex: 0.45,
     },
     cancelButton: {
-        backgroundColor: '#FF9500', // Orange for cancel
+        backgroundColor: '#FF9500',
         flexDirection: 'row',
         paddingVertical: 12,
         paddingHorizontal: 16,
@@ -317,6 +316,12 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '500',
         marginLeft: 6,
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent overlay
     },
 });
 

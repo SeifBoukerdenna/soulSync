@@ -293,6 +293,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-start',
         marginBottom: 10,
+        gap: 5,
     },
     media: {
         height: 250,

@@ -76,7 +76,7 @@ export default function SettingsScreen() {
                 <Slider
                     style={styles.slider}
                     minimumValue={5}
-                    maximumValue={100}
+                    maximumValue={25}
                     step={1}
                     value={localMediaItems}
                     onValueChange={(value) => handleSliderChange(localStars, localDuration, value)}
