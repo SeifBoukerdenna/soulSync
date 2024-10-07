@@ -1,5 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert, Text } from 'react-native';
+import { Video } from 'expo-av'; // Import the Video component from expo-av
+import * as VideoThumbnails from 'expo-video-thumbnails'; // Import expo-video-thumbnails for video thumbnails
+import { Ionicons } from '@expo/vector-icons'; // For play icon
 import useZenModeStore from '@/stores/useZenModeStore';
 import CustomModal from '../misc/CustomModal';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
@@ -7,8 +10,13 @@ import Modal from 'react-native-modal';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useFetchMedia } from '@/hooks/useFetchMedia';
 
+interface MediaItem {
+    uri: string;
+    type: 'image' | 'video';
+}
+
 interface MediaGridProps {
-    mediaList: string[];
+    mediaList: MediaItem[];
     refetchMedia: () => void;
     isSelectionMode: boolean;
     selectedItems: string[];
@@ -27,8 +35,9 @@ const MediaGrid = ({
     const { refetch } = useFetchMedia();
 
     const [isModalVisible, setModalVisible] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
     const [isFullScreen, setFullScreen] = useState(false);
+    const [videoThumbnails, setVideoThumbnails] = useState<{ [uri: string]: string }>({}); // Store video thumbnails
 
     const screenWidth = Dimensions.get('window').width;
     const imageMargin = 5;
@@ -44,9 +53,9 @@ const MediaGrid = ({
         }
     };
 
-    const getMediaRows = (mediaList: string[]) => {
-        const rows: string[][] = [];
-        let currentRow: string[] = [];
+    const getMediaRows = (mediaList: MediaItem[]) => {
+        const rows: MediaItem[][] = [];
+        let currentRow: MediaItem[] = [];
         mediaList.forEach((item, index) => {
             const imageCount = getRandomImageCount();
             if (currentRow.length === 0) {
@@ -65,43 +74,110 @@ const MediaGrid = ({
 
     const mediaRows = useMemo(() => getMediaRows(mediaList), [mediaList]);
 
-    const handleLongPress = (uri: string) => {
+    // Function to generate and store video thumbnail
+    const generateThumbnail = async (uri: string) => {
+        try {
+            const { uri: thumbnailUri } = await VideoThumbnails.getThumbnailAsync(
+                uri,
+                {
+                    time: 1000, // Time in the video to capture the thumbnail (in ms)
+                }
+            );
+            setVideoThumbnails((prevThumbnails) => ({
+                ...prevThumbnails,
+                [uri]: thumbnailUri,
+            }));
+        } catch (e) {
+            console.warn('Could not generate thumbnail', e);
+        }
+    };
+
+    useEffect(() => {
+        // Generate thumbnails for videos
+        mediaList.forEach((item) => {
+            if (item.type === 'video' && !videoThumbnails[item.uri]) {
+                generateThumbnail(item.uri);
+            }
+        });
+    }, [mediaList]);
+
+    const handleLongPress = (item: MediaItem) => {
         if (!isSelectionMode) {
-            setSelectedImage(uri);
+            setSelectedItem(item);
             setModalVisible(true);
         }
     };
 
-    const handlePress = (uri: string) => {
+    const handlePress = (item: MediaItem) => {
         if (isSelectionMode) {
-            onSelectItem(uri);
+            onSelectItem(item.uri);
         } else {
-            setSelectedImage(uri);
+            setSelectedItem(item);
             setFullScreen(true);
         }
     };
 
     const handleCancelModal = () => {
         setModalVisible(false);
-        setSelectedImage(null);
+        setSelectedItem(null);
     };
 
-    const handleDeleteImage = async () => {
-        if (selectedImage) {
+    const handleDeleteMedia = async () => {
+        if (selectedItem) {
             try {
-                await deleteMedia(selectedImage, refetch);
+                await deleteMedia(selectedItem.uri, refetch);
 
                 handleCancelModal();
             } catch (error) {
-                console.error('Error deleting image:', error);
-                Alert.alert('Error', 'There was a problem deleting the image.');
+                console.error('Error deleting media:', error);
+                Alert.alert('Error', 'There was a problem deleting the media.');
             }
         }
     };
 
     const handleSwipeClose = () => {
         setFullScreen(false);
-        setSelectedImage(null);
+        setSelectedItem(null);
+    };
+
+    const renderMediaThumbnail = (item: MediaItem, imageWidth: number) => {
+        if (item.type === 'image') {
+            return (
+                <Image
+                    source={{ uri: item.uri }}
+                    style={[
+                        styles.media,
+                        {
+                            width: imageWidth,
+                            borderColor: selectedItems.includes(item.uri) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
+                            borderWidth: selectedItems.includes(item.uri) ? 3 : 0,
+                        },
+                    ]}
+                />
+            );
+        } else {
+            return (
+                <View>
+                    <Image
+                        source={{ uri: videoThumbnails[item.uri] || item.uri }} // Use the thumbnail if available, otherwise use the video URI
+                        style={[
+                            styles.media,
+                            {
+                                width: imageWidth,
+                                borderColor: selectedItems.includes(item.uri) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
+                                borderWidth: selectedItems.includes(item.uri) ? 3 : 0,
+                            },
+                        ]}
+                    />
+                    <Ionicons
+                        name="play-circle-outline"
+                        size={40}
+                        color="#fff"
+                        style={styles.playIcon}
+                    />
+                </View>
+            );
+        }
     };
 
     return (
@@ -110,6 +186,8 @@ const MediaGrid = ({
                 showsVerticalScrollIndicator={false}
                 data={mediaRows}
                 contentContainerStyle={styles.contentContainer}
+                ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>No media found</Text></View>}
+
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item: row }) => {
                     const totalMarginSpace = (row.length - 1) * imageMargin;
@@ -126,18 +204,7 @@ const MediaGrid = ({
                                     onLongPress={() => handleLongPress(item)}
                                     activeOpacity={0.8}
                                 >
-                                    <Image
-                                        source={{ uri: item }}
-                                        style={[
-                                            styles.image,
-                                            {
-                                                width: imageWidth,
-                                                marginRight: index !== row.length - 1 ? imageMargin : 0,
-                                                borderColor: selectedItems.includes(item) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
-                                                borderWidth: selectedItems.includes(item) ? 3 : 0,
-                                            },
-                                        ]}
-                                    />
+                                    {renderMediaThumbnail(item, imageWidth)}
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -145,13 +212,15 @@ const MediaGrid = ({
                 }}
             />
 
+            {/* Custom modal for image or video */}
             <CustomModal
-                isVisible={isModalVisible}
-                imageUrl={selectedImage}
+                isVisible={isModalVisible && selectedItem?.type === 'image'}
+                imageUrl={selectedItem?.uri || ''}
                 onCancel={handleCancelModal}
-                onDelete={handleDeleteImage}
+                onDelete={handleDeleteMedia}
             />
 
+            {/* Full-screen video or image modal */}
             <Modal
                 isVisible={isFullScreen}
                 style={styles.fullScreenModal}
@@ -162,11 +231,19 @@ const MediaGrid = ({
             >
                 <PanGestureHandler onGestureEvent={handleSwipeClose}>
                     <View style={styles.fullScreenContainer}>
-                        {selectedImage && (
+                        {selectedItem?.type === 'image' && (
                             <Image
-                                source={{ uri: selectedImage }}
-                                style={styles.fullScreenImage}
+                                source={{ uri: selectedItem.uri }}
+                                style={styles.fullScreenMedia}
                                 resizeMode="contain"
+                            />
+                        )}
+                        {selectedItem?.type === 'video' && (
+                            <Video
+                                source={{ uri: selectedItem.uri }}
+                                style={styles.fullScreenMedia}
+                                shouldPlay
+                                useNativeControls
                             />
                         )}
                     </View>
@@ -185,10 +262,15 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         marginBottom: 10,
     },
-    image: {
+    media: {
         height: 250,
         resizeMode: 'cover',
         borderRadius: 10,
+    },
+    playIcon: {
+        position: 'absolute',
+        top: '40%',
+        left: '40%',
     },
     fullScreenModal: {
         margin: 0,
@@ -199,7 +281,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#000',
     },
-    fullScreenImage: {
+    fullScreenMedia: {
         width: '100%',
         height: '100%',
     },

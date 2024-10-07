@@ -8,9 +8,21 @@ export const useUploadMedia = async (
 ) => {
   const response = await fetch(uri);
   const blob = await response.blob();
-  const imageRef = ref(storage, `images/${new Date().getTime()}-photo.jpg`);
 
-  const uploadTask = uploadBytesResumable(imageRef, blob);
+  // Determine media type by the MIME type or file extension
+  const isVideo =
+    blob.type.startsWith('video/') ||
+    uri.endsWith('.mp4') ||
+    uri.endsWith('.mov');
+  const fileType = isVideo ? 'video' : 'image';
+
+  // Save video files in a separate folder
+  const mediaRef = ref(
+    storage,
+    `${fileType}s/${new Date().getTime()}-${fileType}.jpg`
+  );
+
+  const uploadTask = uploadBytesResumable(mediaRef, blob);
 
   uploadTask.on(
     'state_changed',
@@ -18,7 +30,7 @@ export const useUploadMedia = async (
       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
       setProgress(progress); // Update progress
     },
-    error => console.error('Error uploading image:', error),
+    error => console.error(`Error uploading ${fileType}:`, error),
     async () => {
       const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
       refetch(); // Call refetch to update the media list after upload

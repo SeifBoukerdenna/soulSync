@@ -13,6 +13,12 @@ import useMediaStore from '@/stores/useMediaStore';
 import { shuffleArray } from '@/utils/shuffleArray';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
 
+export interface MediaItem {
+    uri: string;
+    type: 'image' | 'video';
+}
+
+
 const ExploreScreen = () => {
     const { data: mediaList, isLoading, refetch } = useFetchMedia();
     const { isZenMode } = useZenModeStore();
@@ -20,13 +26,13 @@ const ExploreScreen = () => {
     const { deleteMedia } = useDeleteMedia();
 
     const [progress, setProgress] = useState(0);
-    const [shuffledMedia, setShuffledMedia] = useState<string[]>([]);
+    const [shuffledMedia, setShuffledMedia] = useState<MediaItem[]>([]);
     const [gridKey, setGridKey] = useState(0);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-    const shuffleAndSetMedia = useCallback((media: string[]) => {
-        const shuffled = shuffleArray([...media]);
+    const shuffleAndSetMedia = useCallback((media: MediaItem[]) => { // Accept MediaItem[]
+        const shuffled = shuffleArray(media); // Shuffle the MediaItem array
         setShuffledMedia(shuffled);
         setGridKey(prevKey => prevKey + 1);
     }, []);
@@ -41,9 +47,11 @@ const ExploreScreen = () => {
         return shuffledMedia?.slice(0, numberOfMediaItems);
     }, [shuffledMedia, numberOfMediaItems]);
 
+    console.log('limitedMediaList:', limitedMediaList);
+
     const handlePickAndUploadImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
             quality: 0.75,
         });
 
