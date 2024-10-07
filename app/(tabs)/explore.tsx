@@ -49,17 +49,25 @@ const ExploreScreen = () => {
 
     console.log('limitedMediaList:', limitedMediaList);
 
-    const handlePickAndUploadImage = async () => {
+    const handlePickAndUploadMedia = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
             quality: 0.75,
         });
 
         if (!result.canceled) {
-            const { uri } = result.assets[0];
-            useUploadMedia(uri, refetch, setProgress);
+            const { uri, type } = result.assets[0];
+            const isVideo = type === 'video';
+
+            // Start the upload and refetch media asynchronously
+            await useUploadMedia(uri, isVideo, () => {
+                // Refetch the media after the upload is completed
+                refetch();
+            }, setProgress);
         }
     };
+
+
 
     const handleRefetchMedia = useCallback(async () => {
         await refetch();
@@ -148,7 +156,7 @@ const ExploreScreen = () => {
 
                 <View style={styles.buttonsContainer}>
                     <TouchableOpacity
-                        onPress={handlePickAndUploadImage}
+                        onPress={handlePickAndUploadMedia}
                         style={[styles.uploadButton, isZenMode && styles.zenModeButton]}
                     >
                         <Ionicons name="cloud-upload-outline" size={20} color="#fff" />

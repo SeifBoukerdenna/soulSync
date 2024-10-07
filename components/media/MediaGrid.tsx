@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert, Text } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert, Text, ActivityIndicator } from 'react-native';
 import { Video } from 'expo-av'; // Import the Video component from expo-av
 import * as VideoThumbnails from 'expo-video-thumbnails'; // Import expo-video-thumbnails for video thumbnails
 import { Ionicons } from '@expo/vector-icons'; // For play icon
@@ -9,6 +9,7 @@ import { useDeleteMedia } from '@/hooks/useDeleteMedia';
 import Modal from 'react-native-modal';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useFetchMedia } from '@/hooks/useFetchMedia';
+import { debounce } from 'lodash';
 
 interface MediaItem {
     uri: string;
@@ -101,6 +102,23 @@ const MediaGrid = ({
         });
     }, [mediaList]);
 
+    useEffect(() => {
+        const debounceGenerateThumbnails = debounce(() => {
+            mediaList.forEach((item) => {
+                if (item.type === 'video' && !videoThumbnails[item.uri]) {
+                    generateThumbnail(item.uri);
+                }
+            });
+        }, 500); // Adjust debounce time as necessary
+
+        debounceGenerateThumbnails();
+
+        return () => {
+            debounceGenerateThumbnails.cancel();
+        };
+    }, [mediaList]);
+
+
     const handleLongPress = (item: MediaItem) => {
         if (!isSelectionMode) {
             setSelectedItem(item);
@@ -158,17 +176,25 @@ const MediaGrid = ({
         } else {
             return (
                 <View>
-                    <Image
-                        source={{ uri: videoThumbnails[item.uri] || item.uri }} // Use the thumbnail if available, otherwise use the video URI
-                        style={[
-                            styles.media,
-                            {
-                                width: imageWidth,
-                                borderColor: selectedItems.includes(item.uri) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
-                                borderWidth: selectedItems.includes(item.uri) ? 3 : 0,
-                            },
-                        ]}
-                    />
+                    {videoThumbnails[item.uri] ? (
+                        <Image
+                            source={{ uri: videoThumbnails[item.uri] }} // Show thumbnail if available
+                            style={[
+                                styles.media,
+                                {
+                                    width: imageWidth,
+                                    borderColor: selectedItems.includes(item.uri) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
+                                    borderWidth: selectedItems.includes(item.uri) ? 3 : 0,
+                                },
+                            ]}
+                        />
+                    ) : (
+                        <View style={[styles.media, { width: imageWidth, justifyContent: 'center', alignItems: 'center' }]}>
+                            <Text>
+                                <ActivityIndicator size="small" color="#fff" />
+                            </Text>
+                        </View>
+                    )}
                     <Ionicons
                         name="play-circle-outline"
                         size={40}
@@ -185,6 +211,9 @@ const MediaGrid = ({
             <FlatList
                 showsVerticalScrollIndicator={false}
                 data={mediaRows}
+                initialNumToRender={3} // Render a limited number of rows initially
+                maxToRenderPerBatch={2} // Render a limited number of rows per batch
+                windowSize={5} // The number of items to render offscreen
                 contentContainerStyle={styles.contentContainer}
                 ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>No media found</Text></View>}
 
