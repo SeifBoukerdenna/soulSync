@@ -1,42 +1,83 @@
-import React, { useMemo } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useFetchMedia } from '@/hooks/useFetchMedia';
 import { useUploadMedia } from '@/hooks/useUploadMedia';
 import * as ImagePicker from 'expo-image-picker';
 import useZenModeStore from '@/stores/useZenModeStore';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import MediaGrid from '@/components/media/MediaGrid';
+import ProgressBar from '@/components/misc/ProgressBar';
+import useMediaStore from '@/stores/useMediaStore';
+import { shuffleArray } from '@/utils/shuffleArray';
 
 const ExploreScreen = () => {
     const { data: mediaList, isLoading, refetch } = useFetchMedia();
     const { isZenMode } = useZenModeStore();
+    const { numberOfMediaItems } = useMediaStore();
 
-    // Handle image picking and upload
+    const [progress, setProgress] = useState(0);
+    const [shuffledMedia, setShuffledMedia] = useState<string[]>([]);
+    const [gridKey, setGridKey] = useState(0);
+
+    const shuffleAndSetMedia = useCallback((media: string[]) => {
+        const shuffled = shuffleArray([...media]);
+        setShuffledMedia(shuffled);
+        setGridKey(prevKey => prevKey + 1);
+    }, []);
+
+    useEffect(() => {
+        if (mediaList) {
+            shuffleAndSetMedia(mediaList);
+        }
+    }, [mediaList, shuffleAndSetMedia]);
+
+    const limitedMediaList = useMemo(() => {
+        return shuffledMedia?.slice(0, numberOfMediaItems);
+    }, [shuffledMedia, numberOfMediaItems]);
+
     const handlePickAndUploadImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
+            quality: 0.75,
         });
 
         if (!result.canceled) {
             const { uri } = result.assets[0];
-            useUploadMedia(uri, refetch);
+            useUploadMedia(uri, refetch, setProgress);
         }
     };
 
-    // Memoize the MediaGrid to avoid re-rendering when zen mode changes
+    const handleRefetchMedia = useCallback(async () => {
+        await refetch();
+        if (mediaList) {
+            shuffleAndSetMedia(mediaList);
+        }
+    }, [refetch, shuffleAndSetMedia, mediaList]);
+
+    useEffect(() => {
+        if (progress === 100) {
+            const timer = setTimeout(() => {
+                setProgress(0);
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [progress]);
+
     const mediaGrid = useMemo(() => {
         if (isLoading) {
             return <LoadingSpinner />;
         }
         return (
-            <View style={styles.gridContainer}>
-                <MediaGrid mediaList={mediaList || []} />
-            </View>
+            <MediaGrid
+                key={gridKey}
+                mediaList={limitedMediaList || []}
+                refetchMedia={refetch}
+            />
         );
-    }, [mediaList, isLoading]);
+    }, [limitedMediaList, isLoading, refetch, gridKey]);
 
     return (
         <SafeAreaView style={[styles.container, isZenMode && styles.zenMode]}>
@@ -44,14 +85,29 @@ const ExploreScreen = () => {
                 <Text style={[styles.title, isZenMode && styles.zenModeTitle]}>
                     Explore Media
                 </Text>
-                <Button
-                    title="Upload Photo"
-                    onPress={handlePickAndUploadImage}
-                    color={isZenMode ? '#8BC34A' : '#007AFF'} // Softer button color in zen mode
-                />
+
+                <View style={styles.buttonsContainer}>
+                    <TouchableOpacity
+                        onPress={handlePickAndUploadImage}
+                        style={[styles.uploadButton, isZenMode && styles.zenModeButton]}
+                    >
+                        <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={handleRefetchMedia}
+                        style={[styles.refetchButton, isZenMode && styles.zenModeButton]}
+                    >
+                        <Ionicons name="refresh-outline" size={20} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
-            {/* Media grid is memoized and won't re-render based on isZenMode */}
-            {mediaGrid}
+
+            {progress > 0 && <ProgressBar progress={progress} />}
+
+            <View style={styles.gridContainer}>
+                {mediaGrid}
+            </View>
         </SafeAreaView>
     );
 };
@@ -59,27 +115,70 @@ const ExploreScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#1A1A1A',
-    },
-    gridContainer: {
-        flex: 1, // Ensures it takes the full available space
-        marginTop: 10,
+        backgroundColor: '#F0F0F5',
     },
     zenMode: {
-        backgroundColor: '#2E2E2E', // Softer, more muted background for zen mode
-        paddingHorizontal: 10, // Reduce padding for a cleaner look
+        backgroundColor: '#1C1C1E',
+    },
+    gridContainer: {
+        flex: 1,
+        marginTop: 20,
+        marginBottom: 20,
     },
     title: {
         fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
+        fontWeight: '600',
+        color: '#333',
         marginBottom: 10,
         textAlign: 'center',
     },
     zenModeTitle: {
-        color: '#B0C4DE', // Softer, more muted text color in zen mode
-        fontWeight: '300', // Lighter font weight for a more relaxing style
+        color: '#E5E5EA',
+        fontWeight: '400',
+    },
+    buttonsContainer: {
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    uploadButton: {
+        backgroundColor: '#007AFF',
+        flexDirection: 'row',
+        padding: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        flex: 0.45,
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    refetchButton: {
+        backgroundColor: '#FF3B30',
+        flexDirection: 'row',
+        padding: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        flex: 0.45,
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    zenModeButton: {
+        backgroundColor: '#8BC34A',
+    },
+    uploadButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 8,
     },
 });
 

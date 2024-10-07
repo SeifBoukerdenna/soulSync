@@ -1,15 +1,19 @@
 import useStarsStore from '@/stores/useStarsStore';
+import useZenModeStore from '@/stores/useZenModeStore';
+import useMediaStore from '@/stores/useMediaStore';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
-import useZenModeStore from '@/stores/useZenModeStore';
 import { Colors } from '@/constants/Colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
-    const { longPressDuration, setLongPressDuration } = useZenModeStore();
-    const [localDuration, setLocalDuration] = useState<number>(longPressDuration);
+    const { longPressDuration, setLongPressDuration, isZenMode } = useZenModeStore();
     const { numberOfStars, setNumberOfStars } = useStarsStore();
+    const { numberOfMediaItems, setNumberOfMediaItems } = useMediaStore();
+    const [localDuration, setLocalDuration] = useState<number>(longPressDuration);
     const [localStars, setLocalStars] = useState<number>(numberOfStars);
+    const [localMediaItems, setLocalMediaItems] = useState<number>(numberOfMediaItems);
 
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
@@ -20,65 +24,82 @@ export default function SettingsScreen() {
         setTimeout(() => {
             setNumberOfStars(localStars);
             setLongPressDuration(localDuration);
+            setNumberOfMediaItems(localMediaItems);
             setIsSaved(true);
             setIsSaving(false);
         }, 1000);
     };
 
-    const handleSliderChange = (newStars: number, newDuration: number) => {
+    const handleSliderChange = (newStars: number, newDuration: number, newMediaItems: number) => {
         if (isSaved) setIsSaved(false);
         setLocalStars(newStars);
         setLocalDuration(newDuration);
+        setLocalMediaItems(newMediaItems);
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.header}>Settings</Text>
+        <SafeAreaView style={[styles.container, isZenMode && styles.zenMode]}>
+            <Text style={[styles.header, isZenMode && styles.zenModeTitle]}>Settings</Text>
 
-            <View style={styles.settingGroup}>
-                <Text style={styles.label}>Number of Stars</Text>
+            <View style={[styles.settingGroup, isZenMode && styles.zenModeSettingGroup]}>
+                <Text style={[styles.label, isZenMode && styles.zenModeLabel]}>Number of Stars</Text>
                 <Slider
                     style={styles.slider}
                     minimumValue={10}
                     maximumValue={250}
                     step={1}
                     value={localStars}
-                    onValueChange={(value) => handleSliderChange(value, localDuration)}
+                    onValueChange={(value) => handleSliderChange(value, localDuration, localMediaItems)}
                     minimumTrackTintColor={Colors.purple}
                     thumbTintColor={Colors.purple}
                 />
-                <Text style={styles.valueText}>{localStars}</Text>
+                <Text style={[styles.valueText, isZenMode && styles.zenModeValueText]}>{localStars}</Text>
             </View>
 
-            <View style={styles.settingGroup}>
-                <Text style={styles.label}>Zen mode delay (ms)</Text>
+            <View style={[styles.settingGroup, isZenMode && styles.zenModeSettingGroup]}>
+                <Text style={[styles.label, isZenMode && styles.zenModeLabel]}>Zen Mode Delay (ms)</Text>
                 <Slider
                     style={styles.slider}
                     minimumValue={500}
                     maximumValue={3000}
                     step={100}
                     value={localDuration}
-                    onValueChange={(value) => handleSliderChange(localStars, value)}
+                    onValueChange={(value) => handleSliderChange(localStars, value, localMediaItems)}
                     minimumTrackTintColor={Colors.purple}
                     thumbTintColor={Colors.purple}
                 />
-                <Text style={styles.valueText}>{localDuration} ms</Text>
+                <Text style={[styles.valueText, isZenMode && styles.zenModeValueText]}>{localDuration} ms</Text>
+            </View>
+
+            <View style={[styles.settingGroup, isZenMode && styles.zenModeSettingGroup]}>
+                <Text style={[styles.label, isZenMode && styles.zenModeLabel]}>Number of Media Items</Text>
+                <Slider
+                    style={styles.slider}
+                    minimumValue={5}
+                    maximumValue={100}
+                    step={1}
+                    value={localMediaItems}
+                    onValueChange={(value) => handleSliderChange(localStars, localDuration, value)}
+                    minimumTrackTintColor={Colors.purple}
+                    thumbTintColor={Colors.purple}
+                />
+                <Text style={[styles.valueText, isZenMode && styles.zenModeValueText]}>{localMediaItems}</Text>
             </View>
 
             <TouchableOpacity
-                style={[styles.saveButton, (isSaved || isSaving) && styles.disabledButton]}
+                style={[styles.saveButton, (isSaved || isSaving) && styles.disabledButton, isZenMode && styles.zenModeSaveButton]}
                 onPress={handleSave}
                 disabled={isSaved || isSaving}
             >
                 {isSaving ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                    <Text style={styles.saveButtonText}>
-                        {isSaved ? '✓' : 'Save Settings'}
+                    <Text style={[styles.saveButtonText, isZenMode && styles.zenModeSaveButtonText]}>
+                        {isSaved ? '✓ Saved' : 'Save Settings'}
                     </Text>
                 )}
             </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     );
 }
 
@@ -87,46 +108,85 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#1A1A1A',
+        backgroundColor: '#F0F0F5',
+    },
+    zenMode: {
+        backgroundColor: '#1C1C1E',
     },
     header: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontWeight: '600',
         textAlign: 'center',
         marginBottom: 20,
-        color: '#FFFFFF', // White text for readability
+        color: '#000000',
+    },
+    zenModeHeader: {
+        color: '#FFFFFF',
     },
     settingGroup: {
         marginBottom: 30,
+        backgroundColor: '#FFFFFF',
+        padding: 15,
+        borderRadius: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    zenModeSettingGroup: {
+        backgroundColor: '#2C2C2E',
     },
     label: {
-        fontSize: 18,
+        fontSize: 16,
+        fontWeight: '500',
         marginBottom: 10,
-        color: '#E5E5E5', // Light gray for labels
+        color: '#3C3C43',
+    },
+    zenModeLabel: {
+        color: '#8E8E93',
     },
     slider: {
         width: '100%',
         height: 40,
     },
     valueText: {
-        fontSize: 16,
+        fontSize: 14,
         textAlign: 'center',
         marginTop: 10,
-        color: '#FFFFFF', // White text for slider values
+        color: '#8E8E93'
+    },
+    zenModeTitle: {
+        color: '#E5E5EA',
+        fontWeight: '400',
+    },
+    zenModeValueText: {
+        color: '#D1D1D6',
     },
     saveButton: {
-        backgroundColor: Colors.lightPurple, // Primary button color
+        backgroundColor: '#007AFF',
         paddingVertical: 15,
-        borderRadius: 10,
+        borderRadius: 14,
         alignItems: 'center',
         marginTop: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    zenModeSaveButton: {
+        backgroundColor: '#8BC34A',
     },
     saveButtonText: {
-        color: '#FFFFFF', // White text for button
+        color: '#FFFFFF',
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '600',
+    },
+    zenModeSaveButtonText: {
+        color: '#FFFFFF',
     },
     disabledButton: {
-        backgroundColor: '#666666', // Change button color when disabled
+        backgroundColor: '#A6A6A6',
     },
 });

@@ -3,7 +3,8 @@ import { storage } from '@/firebaseConfig';
 
 export const useUploadMedia = async (
   uri: string,
-  refetch: () => void // Accept the refetch function from React Query
+  refetch: () => void,
+  setProgress: (progress: number) => void // Accept progress callback
 ) => {
   const response = await fetch(uri);
   const blob = await response.blob();
@@ -13,13 +14,15 @@ export const useUploadMedia = async (
 
   uploadTask.on(
     'state_changed',
-    () => {
-      // progress tracking logic (optional)
+    snapshot => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      setProgress(progress); // Update progress
     },
     error => console.error('Error uploading image:', error),
     async () => {
       const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
       refetch(); // Call refetch to update the media list after upload
+      setProgress(100); // Complete the progress
     }
   );
 };

@@ -6,7 +6,7 @@ type StarStoreState = {
 };
 
 const useStarsStore = create<StarStoreState>(set => ({
-  numberOfStars: 100, // Default number of stars
+  numberOfStars: 100,
   setNumberOfStars: (num: number) => set(() => ({ numberOfStars: num })),
 }));
 

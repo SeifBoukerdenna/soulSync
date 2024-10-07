@@ -11,7 +11,9 @@ const fetchMedia = async (): Promise<string[]> => {
 
 export const useFetchMedia = () => {
   return useQuery<string[], Error>({
-    queryKey: ['media'], // Define queryKey here
-    queryFn: fetchMedia, // Use the fetchMedia function here
+    queryKey: ['media'],
+    queryFn: fetchMedia,
+    staleTime: 0, // Ensures data is never considered stale
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
   });
 };
