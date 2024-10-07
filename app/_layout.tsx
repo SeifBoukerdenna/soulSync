@@ -13,7 +13,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const { isZenMode, setZenMode, longPressDuration } = useZenModeStore();
+  const { isZenMode, setZenMode, longPressDuration, initializeZenMode } = useZenModeStore();
   const [showMessage, setShowMessage] = useState<string | null>(null);
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -33,6 +33,9 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
+
+    // Initialize Zen Mode settings from Firebase on app start
+    initializeZenMode();
   }, [loaded]);
 
   if (!loaded) {

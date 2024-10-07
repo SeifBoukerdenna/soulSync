@@ -30,8 +30,8 @@ export const useFetchMedia = () => {
   return useQuery<MediaItem[], Error>({
     queryKey: ['media'],
     queryFn: fetchMedia, // Your fetchMedia logic
-    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    staleTime: 0.1 * 60 * 1000, // Cache data for 10sec
     refetchOnWindowFocus: false, // Disable refetch on window focus
-    refetchOnMount: false, // Do not refetch automatically when the component mounts
+    refetchOnMount: true, // Do not refetch automatically when the component mounts
   });
 };

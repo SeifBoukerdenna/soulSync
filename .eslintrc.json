@@ -27,14 +27,67 @@
     "@typescript-eslint",
     "prettier",
     "jsx-a11y",
-    "import"
+    "import",
+    "simple-import-sort"
   ],
   "rules": {
-    "prettier/prettier": "error",
-    "react/prop-types": "off",
-    "react/react-in-jsx-scope": "off",
-    "import/no-unresolved": "error",
-    "jsx-a11y/anchor-is-valid": "off"
+    "prettier/prettier": [
+      "error",
+      {
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "arrowParens": "avoid",
+        "printWidth": 80,
+        "tabWidth": 2,
+        "endOfLine": "lf"
+      }
+    ],
+
+    // General best practices
+    "eqeqeq": ["error", "always"], // Enforce strict equality
+    "curly": ["error", "all"], // Enforce consistent use of curly braces
+    "no-console": ["warn", { "allow": ["warn", "error"] }], // Warn for console.log but allow warn and error
+    "no-var": "error", // Disallow var in favor of let/const
+    "prefer-const": "error", // Prefer const when variables are not reassigned
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }], // Allow _ for ignored variables
+
+    // Import sorting and ordering
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+
+    // React-specific rules
+    "react/jsx-boolean-value": ["error", "never"], // Enforce shorthand boolean attributes
+    "react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }], // Disallow unnecessary curly braces
+    "react/self-closing-comp": "error", // Enforce self-closing tags for components without children
+
+    // Hooks rules
+    "react-hooks/rules-of-hooks": "error", // Enforce the rules of hooks
+    "react-hooks/exhaustive-deps": "warn", // Warn about missing dependencies in useEffect
+
+    // Accessibility
+    "jsx-a11y/anchor-is-valid": "off", // Disable anchor validity as it often conflicts with React Router
+    "jsx-a11y/no-autofocus": "warn", // Warn on autoFocus for accessibility concerns
+
+    // Typescript-specific rules
+    "@typescript-eslint/explicit-module-boundary-types": "off", // Disable forcing return types in functions
+    "@typescript-eslint/no-explicit-any": "warn", // Warn but do not error for usage of `any`
+
+    // Import order rule with groups and newlines
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          ["builtin", "external"],
+          ["internal", "parent", "sibling", "index"]
+        ],
+        "newlines-between": "always"
+      }
+    ],
+
+    // No use before define, handled by TS
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": "error"
   },
   "settings": {
     "react": {

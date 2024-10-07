@@ -1,33 +1,45 @@
 import useStarsStore from '@/stores/useStarsStore';
 import useZenModeStore from '@/stores/useZenModeStore';
 import useMediaStore from '@/stores/useMediaStore';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Colors } from '@/constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSettingsOptions } from '@/hooks/useSettingsOptions';
 
 export default function SettingsScreen() {
-    const { longPressDuration, setLongPressDuration, isZenMode } = useZenModeStore();
-    const { numberOfStars, setNumberOfStars } = useStarsStore();
-    const { numberOfMediaItems, setNumberOfMediaItems } = useMediaStore();
-    const [localDuration, setLocalDuration] = useState<number>(longPressDuration);
-    const [localStars, setLocalStars] = useState<number>(numberOfStars);
-    const [localMediaItems, setLocalMediaItems] = useState<number>(numberOfMediaItems);
+    const { settings, loading, error, updateSettings } = useSettingsOptions();
+    const { isZenMode } = useZenModeStore();
+    const [localDuration, setLocalDuration] = useState<number>(1000);
+    const [localStars, setLocalStars] = useState<number>(100);
+    const [localMediaItems, setLocalMediaItems] = useState<number>(10);
 
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
 
-    const handleSave = () => {
-        setIsSaving(true);
+    useEffect(() => {
+        if (settings) {
+            setLocalStars(settings.numberOfStars);
+            setLocalDuration(settings.longPressDuration);
+            setLocalMediaItems(settings.numberOfMediaItems);
+        }
+    }, [settings]);
 
-        setTimeout(() => {
-            setNumberOfStars(localStars);
-            setLongPressDuration(localDuration);
-            setNumberOfMediaItems(localMediaItems);
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await updateSettings({
+                numberOfStars: localStars,
+                longPressDuration: localDuration,
+                numberOfMediaItems: localMediaItems,
+            });
             setIsSaved(true);
+        } catch (error) {
+            console.error('Failed to save settings', error);
+        } finally {
             setIsSaving(false);
-        }, 1000);
+        }
     };
 
     const handleSliderChange = (newStars: number, newDuration: number, newMediaItems: number) => {
@@ -36,6 +48,18 @@ export default function SettingsScreen() {
         setLocalDuration(newDuration);
         setLocalMediaItems(newMediaItems);
     };
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={Colors.purple} />
+            </View>
+        );
+    }
+
+    if (error) {
+        return <Text>Error loading settings: {error}</Text>;
+    }
 
     return (
         <SafeAreaView style={[styles.container, isZenMode && styles.zenMode]}>
@@ -108,6 +132,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
+        backgroundColor: '#F0F0F5',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: '#F0F0F5',
     },
     zenMode: {

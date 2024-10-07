@@ -255,7 +255,7 @@ const MediaGrid = ({
                 style={styles.fullScreenModal}
                 onBackdropPress={handleSwipeClose}
                 onSwipeComplete={handleSwipeClose}
-                swipeDirection={['down', 'up']}
+                swipeDirection={['down', 'up', 'left', 'right']}
                 backdropOpacity={1}
             >
                 <PanGestureHandler onGestureEvent={handleSwipeClose}>

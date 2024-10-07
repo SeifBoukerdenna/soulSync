@@ -9,9 +9,9 @@ import useZenModeStore from '@/stores/useZenModeStore';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import MediaGrid from '@/components/media/MediaGrid';
 import ProgressBar from '@/components/misc/ProgressBar';
-import useMediaStore from '@/stores/useMediaStore';
 import { shuffleArray } from '@/utils/shuffleArray';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
+import { useSettingsOptions } from '@/hooks/useSettingsOptions';
 
 export interface MediaItem {
     uri: string;
@@ -21,7 +21,7 @@ export interface MediaItem {
 const ExploreScreen = () => {
     const { data: mediaList, isLoading, isFetching, refetch } = useFetchMedia();
     const { isZenMode } = useZenModeStore();
-    const { numberOfMediaItems } = useMediaStore();
+    const { settings } = useSettingsOptions();
     const { deleteMedia } = useDeleteMedia();
 
     const [progress, setProgress] = useState(0);
@@ -43,8 +43,10 @@ const ExploreScreen = () => {
     }, [mediaList, shuffleAndSetMedia]);
 
     const limitedMediaList = useMemo(() => {
-        return shuffledMedia?.slice(0, numberOfMediaItems);
-    }, [shuffledMedia, numberOfMediaItems]);
+        return shuffledMedia?.slice(0, settings?.numberOfMediaItems);
+    }, [shuffledMedia, settings?.numberOfMediaItems]);
+
+    console.log('limitedMediaList:', limitedMediaList.length);
 
     const handlePickAndUploadMedia = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
