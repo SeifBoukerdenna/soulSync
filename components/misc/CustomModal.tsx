@@ -2,15 +2,16 @@ import useZenModeStore from '@/stores/useZenModeStore';
 import React from 'react';
 import { View, Image, StyleSheet, Text, Pressable, Dimensions } from 'react-native';
 import Modal from 'react-native-modal';
+import { Video } from 'expo-av'; // Import the Video component from expo-av
 
 interface CustomModalProps {
     isVisible: boolean;
-    imageUrl: string | null;
+    mediaItem: { uri: string, type: 'image' | 'video' } | null; // Updated to handle both image and video
     onCancel: () => void;
     onDelete: () => void;
 }
 
-const CustomModal = ({ isVisible, imageUrl, onCancel, onDelete }: CustomModalProps) => {
+const CustomModal = ({ isVisible, mediaItem, onCancel, onDelete }: CustomModalProps) => {
     const { isZenMode } = useZenModeStore();
 
     return (
@@ -21,13 +22,23 @@ const CustomModal = ({ isVisible, imageUrl, onCancel, onDelete }: CustomModalPro
             backdropOpacity={0.4} // Subtle dark backdrop
         >
             <View style={[styles.modalContainer, isZenMode && styles.zenModeContainer]}>
-                {imageUrl && (
+                {mediaItem && mediaItem.type === 'image' && (
                     <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.fullImage}
+                        source={{ uri: mediaItem.uri }}
+                        style={styles.fullMedia}
                         resizeMode="contain"
                     />
                 )}
+
+                {mediaItem && mediaItem.type === 'video' && (
+                    <Video
+                        source={{ uri: mediaItem.uri }}
+                        style={styles.fullMedia}
+                        useNativeControls
+                        shouldPlay
+                    />
+                )}
+
                 <View style={styles.modalButtonContainer}>
                     <Pressable
                         onPress={onCancel}
@@ -80,7 +91,7 @@ const styles = StyleSheet.create({
     zenModeContainer: {
         backgroundColor: '#2E2E2E',
     },
-    fullImage: {
+    fullMedia: {
         width: '100%',
         height: Dimensions.get('window').height * 0.6,
         borderRadius: 12,

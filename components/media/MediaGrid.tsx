@@ -243,8 +243,8 @@ const MediaGrid = ({
 
             {/* Custom modal for image or video */}
             <CustomModal
-                isVisible={isModalVisible && selectedItem?.type === 'image'}
-                imageUrl={selectedItem?.uri || ''}
+                isVisible={isModalVisible && selectedItem !== null}
+                mediaItem={selectedItem}  // Pass the selected media item (image or video)
                 onCancel={handleCancelModal}
                 onDelete={handleDeleteMedia}
             />
@@ -271,13 +271,16 @@ const MediaGrid = ({
                             <Video
                                 source={{ uri: selectedItem.uri }}
                                 style={styles.fullScreenMedia}
-                                shouldPlay
-                                useNativeControls
+                                shouldPlay={true} // You may set it to false initially to give the user control
+                                useNativeControls={true}  // Ensure this is enabled for native controls
+                                isLooping={false}  // Disable looping if you want normal playback control
                             />
                         )}
                     </View>
                 </PanGestureHandler>
             </Modal>
+
+
         </>
     );
 };

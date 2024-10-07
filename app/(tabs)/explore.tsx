@@ -47,7 +47,6 @@ const ExploreScreen = () => {
         return shuffledMedia?.slice(0, numberOfMediaItems);
     }, [shuffledMedia, numberOfMediaItems]);
 
-    console.log('limitedMediaList:', limitedMediaList);
 
     const handlePickAndUploadMedia = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
