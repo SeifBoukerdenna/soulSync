@@ -1,5 +1,7 @@
+import SunCalc from 'suncalc';
 import { Dimensions } from 'react-native';
-
+import opentype from 'opentype.js';
+import RNFS from 'react-native-fs';
 const { width, height } = Dimensions.get('window');
 
 export type StarData = {
@@ -38,31 +40,80 @@ export const lerpColor = (color1: string, color2: string, factor: number) => {
 };
 
 export const getGradientColors = (): [string, string] => {
-  const currentHour = new Date().getHours();
-  const isDay = currentHour >= 6 && currentHour < 18;
+  const currentDate = new Date();
+  const lat = 45.5017;
+  const lon = -73.5673;
 
-  const dayColor1 = '#1E3C72';
-  const dayColor2 = '#2A5298';
-
-  const nightColor1 = '#000000';
-  const nightColor2 = '#1C1C1C';
+  const sunPos = SunCalc.getPosition(currentDate, lat, lon);
+  const altitudeDeg = (sunPos.altitude * 180) / Math.PI;
 
   let factor: number;
-  if (isDay) {
-    factor = (currentHour - 6) / 12;
-    return [
-      lerpColor(nightColor1, dayColor1, factor),
-      lerpColor(nightColor2, dayColor2, factor),
-    ];
+
+  if (altitudeDeg <= -6) {
+    factor = 0;
+  } else if (altitudeDeg > -6 && altitudeDeg < 0) {
+    factor = ((altitudeDeg + 6) / 6) * 0.5;
+  } else if (altitudeDeg >= 0 && altitudeDeg <= 90) {
+    factor = 0.5 + (altitudeDeg / 90) * 0.5;
   } else {
-    if (currentHour >= 18) {
-      factor = (currentHour - 18) / 12;
-    } else {
-      factor = (currentHour + 6) / 12;
-    }
-    return [
-      lerpColor(dayColor1, nightColor1, factor),
-      lerpColor(dayColor2, nightColor2, factor),
-    ];
+    factor = 1;
   }
+
+  const nightColor1 = '#0B0C10';
+  const nightColor2 = '#1F2833';
+
+  const dawnDuskColor1 = '#FF4500';
+  const dawnDuskColor2 = '#FFA500';
+
+  const dayColor1 = '#87CEEB';
+  const dayColor2 = '#ADD8E6';
+
+  let color1, color2;
+
+  if (factor <= 0.5) {
+    const localFactor = factor * 2;
+    color1 = lerpColor(nightColor1, dawnDuskColor1, localFactor);
+    color2 = lerpColor(nightColor2, dawnDuskColor2, localFactor);
+  } else {
+    const localFactor = (factor - 0.5) * 2;
+    color1 = lerpColor(dawnDuskColor1, dayColor1, localFactor);
+    color2 = lerpColor(dawnDuskColor2, dayColor2, localFactor);
+  }
+
+  return [color1, color2];
+};
+
+export const generateStarsFromMessage = (message: string[]): StarData[] => {
+  const stars: StarData[] = [];
+  const numRows = message.length;
+  const numCols = message.reduce((max, line) => Math.max(max, line.length), 0);
+
+  // Determine the cell size based on desired scaling
+  const desiredWidth = width * 0.7; // Use 80% of screen width
+  const desiredHeight = height * 0.7; // Use 80% of screen height
+  const cellWidth = desiredWidth / numCols;
+  const cellHeight = desiredHeight / numRows;
+
+  const xOffset = (width - desiredWidth) / 2;
+  const yOffset = (height - desiredHeight) / 2;
+
+  for (let row = 0; row < numRows; row++) {
+    const line = message[row];
+    for (let col = 0; col < line.length; col++) {
+      const char = line[col];
+      if (char === '*') {
+        // Only create stars where there is an asterisk
+        const x = xOffset + col * cellWidth + cellWidth / 2;
+        const y = yOffset + row * cellHeight + cellHeight / 2;
+        stars.push({
+          x,
+          y,
+          size: Math.random() * 5 + 5, // Increase size to 5-10
+          isShootingStar: false,
+        });
+      }
+    }
+  }
+
+  return stars;
 };

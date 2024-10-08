@@ -215,7 +215,7 @@ const MediaGrid = ({
                 maxToRenderPerBatch={2} // Render a limited number of rows per batch
                 windowSize={5} // The number of items to render offscreen
                 contentContainerStyle={styles.contentContainer}
-                ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>No media found</Text></View>}
+                ListEmptyComponent={() => <ActivityIndicator size="large" color="#007AFF" />}
 
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item: row }) => {
