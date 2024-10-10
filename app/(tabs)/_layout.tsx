@@ -1,3 +1,4 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
@@ -21,6 +22,9 @@ export default function TabsLayout() {
               break;
             case 'explore':
               iconName = 'compass-outline';
+              break;
+            case 'bucket-list':
+              iconName = 'list-outline';
               break;
             default:
               iconName = 'alert-circle-outline';
@@ -49,15 +53,10 @@ export default function TabsLayout() {
         headerShown: false,
       })}
     >
-      <Tabs.Screen name="index" options={{
-        tabBarShowLabel: false,
-      }} />
-      <Tabs.Screen name='explore' options={{
-        tabBarShowLabel: false,
-      }} />
-      <Tabs.Screen name="settings" options={{
-        tabBarShowLabel: false,
-      }} />
+      <Tabs.Screen name="index" options={{ tabBarShowLabel: false }} />
+      <Tabs.Screen name="explore" options={{ tabBarShowLabel: false }} />
+      <Tabs.Screen name="bucket-list" options={{ tabBarShowLabel: false }} />
+      <Tabs.Screen name="settings" options={{ tabBarShowLabel: false }} />
     </Tabs>
   );
 }
