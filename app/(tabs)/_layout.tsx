@@ -31,7 +31,13 @@ export default function TabsLayout() {
               break;
           }
 
-          return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={size + 5} color={color} />;
+          return (
+            <Ionicons
+              name={iconName as keyof typeof Ionicons.glyphMap}
+              size={size + 5}
+              color={color}
+            />
+          );
         },
         tabBarActiveTintColor: Colors.blue,
         tabBarInactiveTintColor: '#A8A8A8',

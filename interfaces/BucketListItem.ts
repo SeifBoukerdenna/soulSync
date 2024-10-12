@@ -1,5 +1,5 @@
 interface BucketListItem {
-  key: string;
+  key?: string;
   item: string;
   dateCreated: string;
   started: boolean;

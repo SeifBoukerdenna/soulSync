@@ -10,7 +10,10 @@ export const Colors = {
   purple: '#CDB4DB',
   pink: '#FFC8DD',
   salmon: '#FFAFCC',
-  blue: '#A2D2FF',
+  // blue: '#A2D2FF',
   paleBlue: '#BDE0FE',
   lightPurple: 'rgba(55, 44, 65, 0.85)',
+  blue: '#1E90FF',
+  green: '#32CD32',
+  red: '#FF4500',
 };
