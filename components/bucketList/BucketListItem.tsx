@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { BucketItem } from '@/hooks/useBucketList';
 import { Colors } from '@/constants/Colors';
+import moment from 'moment';
 
 interface Props {
     item: BucketItem;
@@ -41,7 +42,7 @@ const BucketListItem: React.FC<Props> = ({ item, onToggleCompletion, onEdit, onD
                     <Text style={[styles.itemDescription, { color: currentColors.gray }]}>{item.description}</Text>
                 )}
                 <Text style={[styles.itemDate, { color: currentColors.gray }]}>
-                    Added on: {new Date(item.dateAdded).toLocaleDateString()}
+                    Added {moment(item.dateAdded).fromNow()}
                 </Text>
             </View>
             <View style={styles.itemActions}>

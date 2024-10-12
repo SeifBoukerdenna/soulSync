@@ -18,6 +18,8 @@ import { BucketItem } from '@/hooks/useBucketList';
 import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
 import { getGradientColors } from '@/components/stars/utils'; // Import the utility
 import { useSettingsOptions } from '@/hooks/useSettingsOptions'; // Import useSettingsOptions
+import moment from 'moment'; // Add moment.js for date formatting
+
 
 interface Props {
     visible: boolean;
@@ -74,7 +76,6 @@ const AddEditModal: React.FC<Props> = ({ visible, onClose, onSave, currentItem, 
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.modalOverlay}
             >
-                {/* Conditional Background */}
                 {settings?.useDynamicBackground && (
                     <LinearGradient colors={gradientColors as [string, string]} style={styles.gradientBackground} />
                 )}
@@ -84,7 +85,6 @@ const AddEditModal: React.FC<Props> = ({ visible, onClose, onSave, currentItem, 
                     borderWidth: settings?.useDynamicBackground ? 0 : 1,
                     borderColor: currentColors.gray,
                 }]}>
-                    {/* If dynamic background is enabled, use overlay to apply background */}
                     {settings?.useDynamicBackground && (
                         <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]} />
                     )}
@@ -93,13 +93,6 @@ const AddEditModal: React.FC<Props> = ({ visible, onClose, onSave, currentItem, 
                         <Text style={[styles.modalTitle, { color: currentColors.text }]}>
                             {currentItem ? 'Edit Item' : 'Add New Item'}
                         </Text>
-                        <Ionicons
-                            name="close-circle-outline"
-                            size={24}
-                            color={currentColors.gray}
-                            style={styles.modalCloseIcon}
-                            onPress={onClose}
-                        />
                         <Text style={[styles.inputLabel, { color: currentColors.text }]}>Title *</Text>
                         <TextInput
                             style={[
@@ -136,6 +129,13 @@ const AddEditModal: React.FC<Props> = ({ visible, onClose, onSave, currentItem, 
                             multiline
                             numberOfLines={4}
                         />
+
+                        {currentItem && currentItem.dateAdded && (
+                            <Text style={[styles.itemDate, { color: currentColors.gray }]}>
+                                Item added on: {moment(currentItem.dateAdded).format('MMMM Do YYYY')}
+                            </Text>
+                        )}
+
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
                                 style={[
@@ -228,13 +228,18 @@ const styles = StyleSheet.create({
     },
     modalButtons: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
     },
     button: {
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 8,
         marginLeft: 10,
+    },
+    itemDate: {
+        fontSize: 12,
+        marginTop: 8,
+        marginBottom: 16,
     },
     cancelButton: {
         // Background color is dynamically set based on currentColors

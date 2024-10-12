@@ -2,13 +2,13 @@
   "expo": {
     "name": "SpiritTide",
     "slug": "soulSync",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/AppIcon-app.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash_screen.png",
+      "image": "./assets/images/splash-screen.png",
       "resizeMode": "contain",
       "backgroundColor": "black"
     },

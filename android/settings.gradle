@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'soulSync'
+rootProject.name = 'SpiritTide'
 
 dependencyResolutionManagement {
   versionCatalogs {

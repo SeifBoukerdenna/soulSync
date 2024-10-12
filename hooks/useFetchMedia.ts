@@ -1,3 +1,5 @@
+// hooks/useFetchMedia.ts
+
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/firebaseConfig';
 import { useQuery } from '@tanstack/react-query';
@@ -12,26 +14,26 @@ const fetchMedia = async (): Promise<MediaItem[]> => {
 
   const imagePromises = imagesList.items.map(async item => {
     const url = await getDownloadURL(item);
-    return { uri: url, type: 'image' as const }; // Explicitly mark 'image' type
+    return { uri: url, type: 'image' as const };
   });
 
   const videoPromises = videosList.items.map(async item => {
     const url = await getDownloadURL(item);
-    return { uri: url, type: 'video' as const }; // Explicitly mark 'video' type
+    return { uri: url, type: 'video' as const };
   });
 
   const images = await Promise.all(imagePromises);
   const videos = await Promise.all(videoPromises);
 
-  return [...images, ...videos]; // Return combined array of MediaItems
+  return [...images, ...videos];
 };
 
 export const useFetchMedia = () => {
   return useQuery<MediaItem[], Error>({
     queryKey: ['media'],
-    queryFn: fetchMedia, // Your fetchMedia logic
-    staleTime: 0.1 * 60 * 1000, // Cache data for 10sec
-    refetchOnWindowFocus: false, // Disable refetch on window focus
-    refetchOnMount: true, // Do not refetch automatically when the component mounts
+    queryFn: fetchMedia,
+    staleTime: 10 * 1000, // 10 seconds
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Changed to false to prevent automatic refetch on mount
   });
 };

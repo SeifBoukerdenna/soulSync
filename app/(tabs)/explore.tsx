@@ -1,7 +1,15 @@
 // app/components/ExploreScreen.tsx
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Alert,
+    ActivityIndicator,
+    Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchMedia } from '@/hooks/useFetchMedia';
@@ -142,9 +150,6 @@ const ExploreScreen = () => {
     }, [progress]);
 
     const mediaGrid = useMemo(() => {
-        if (isLoading || isFetching) {
-            return <LoadingSpinner />;
-        }
         return (
             <MediaGrid
                 key={gridKey}
@@ -155,7 +160,7 @@ const ExploreScreen = () => {
                 onSelectItem={handleSelectItem}
             />
         );
-    }, [limitedMediaList, isLoading, isFetching, refetch, gridKey, isSelectionMode, selectedItems]);
+    }, [limitedMediaList, refetch, gridKey, isSelectionMode, selectedItems]);
 
     // Update gradient colors periodically if dynamic background is enabled
     useEffect(() => {
@@ -190,9 +195,15 @@ const ExploreScreen = () => {
             {/* Overlay Content */}
             <View style={styles.contentContainer}>
                 {/* Header */}
-                <Text style={[styles.title, { color: currentColors.text }]}>
-                    Explore Media
-                </Text>
+                <View style={styles.headerContainer}>
+                    <Text style={[styles.title, { color: currentColors.text }]}>
+                        Explore Media
+                    </Text>
+                    {/* Global Loading Indicator in Header */}
+                    {isFetching && (
+                        <ActivityIndicator size="small" color={currentColors.text} style={styles.headerLoader} />
+                    )}
+                </View>
 
                 {/* Action Buttons */}
                 <View style={styles.buttonsContainer}>
@@ -249,11 +260,13 @@ const ExploreScreen = () => {
                 {/* Media Grid */}
                 <View style={styles.gridContainer}>
                     {mediaGrid}
-                    {isFetching && (
-                        <View style={styles.loadingOverlay}>
-                            <LoadingSpinner />
+                    {/* Optional Inline Loading Indicator within Media Grid */}
+                    {/* This can be uncommented if you want an additional loader inside the grid */}
+                    {/* {isFetching && (
+                        <View style={styles.inlineLoading}>
+                            <ActivityIndicator size="small" color={currentColors.text} />
                         </View>
-                    )}
+                    )} */}
                 </View>
             </View>
         </SafeAreaView>
@@ -279,12 +292,20 @@ const styles = StyleSheet.create({
         padding: 20,
         justifyContent: 'flex-start',
     },
+    headerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
     title: {
         fontSize: 24,
         fontWeight: '600',
         color: '#333', // Will be overridden by dynamic color
-        marginBottom: 10,
         textAlign: 'center',
+    },
+    headerLoader: {
+        marginLeft: 10,
     },
     buttonsContainer: {
         flexDirection: 'row',
@@ -361,15 +382,19 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginLeft: 6,
     },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent overlay
-    },
     gridContainer: {
         flex: 1,
         marginTop: 20,
         marginBottom: 20,
     },
+    // Optional Inline Loading Indicator Style
+    /*
+    inlineLoading: {
+        position: 'absolute',
+        bottom: 10,
+        left: '50%',
+        transform: [{ translateX: -10 }],
+        zIndex: 10,
+    },
+    */
 });

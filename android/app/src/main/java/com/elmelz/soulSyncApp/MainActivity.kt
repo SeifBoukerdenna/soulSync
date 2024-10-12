@@ -1,4 +1,4 @@
-package com.elmelz.soulSync
+package com.elmelz.soulSyncApp
 
 import android.os.Build
 import android.os.Bundle

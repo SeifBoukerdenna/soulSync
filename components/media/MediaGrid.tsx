@@ -1,8 +1,10 @@
+// app/components/media/MediaGrid.tsx
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert, Text, ActivityIndicator } from 'react-native';
-import { Video } from 'expo-av'; // Import the Video component from expo-av
-import * as VideoThumbnails from 'expo-video-thumbnails'; // Import expo-video-thumbnails for video thumbnails
-import { Ionicons } from '@expo/vector-icons'; // For play icon
+import { Video } from 'expo-av';
+import * as VideoThumbnails from 'expo-video-thumbnails';
+import { Ionicons } from '@expo/vector-icons';
 import useZenModeStore from '@/stores/useZenModeStore';
 import CustomModal from '../misc/CustomModal';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
@@ -38,7 +40,7 @@ const MediaGrid = ({
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
     const [isFullScreen, setFullScreen] = useState(false);
-    const [videoThumbnails, setVideoThumbnails] = useState<{ [uri: string]: string }>({}); // Store video thumbnails
+    const [videoThumbnails, setVideoThumbnails] = useState<{ [uri: string]: string }>({});
 
     const screenWidth = Dimensions.get('window').width;
     const imageMargin = 5;
@@ -75,13 +77,12 @@ const MediaGrid = ({
 
     const mediaRows = useMemo(() => getMediaRows(mediaList), [mediaList]);
 
-    // Function to generate and store video thumbnail
     const generateThumbnail = async (uri: string) => {
         try {
             const { uri: thumbnailUri } = await VideoThumbnails.getThumbnailAsync(
                 uri,
                 {
-                    time: 1000, // Time in the video to capture the thumbnail (in ms)
+                    time: 1000,
                 }
             );
             setVideoThumbnails((prevThumbnails) => ({
@@ -94,7 +95,6 @@ const MediaGrid = ({
     };
 
     useEffect(() => {
-        // Generate thumbnails for videos
         mediaList.forEach((item) => {
             if (item.type === 'video' && !videoThumbnails[item.uri]) {
                 generateThumbnail(item.uri);
@@ -109,7 +109,7 @@ const MediaGrid = ({
                     generateThumbnail(item.uri);
                 }
             });
-        }, 500); // Adjust debounce time as necessary
+        }, 500);
 
         debounceGenerateThumbnails();
 
@@ -117,7 +117,6 @@ const MediaGrid = ({
             debounceGenerateThumbnails.cancel();
         };
     }, [mediaList]);
-
 
     const handleLongPress = (item: MediaItem) => {
         if (!isSelectionMode) {
@@ -144,7 +143,6 @@ const MediaGrid = ({
         if (selectedItem) {
             try {
                 await deleteMedia(selectedItem.uri, refetch);
-
                 handleCancelModal();
             } catch (error) {
                 console.error('Error deleting media:', error);
@@ -167,7 +165,7 @@ const MediaGrid = ({
                         styles.media,
                         {
                             width: imageWidth,
-                            borderColor: selectedItems.includes(item.uri) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
+                            borderColor: selectedItems.includes(item.uri) ? (isZenMode ? '#34C759' : '#007AFF') : 'transparent',
                             borderWidth: selectedItems.includes(item.uri) ? 3 : 0,
                         },
                     ]}
@@ -178,21 +176,19 @@ const MediaGrid = ({
                 <View>
                     {videoThumbnails[item.uri] ? (
                         <Image
-                            source={{ uri: videoThumbnails[item.uri] }} // Show thumbnail if available
+                            source={{ uri: videoThumbnails[item.uri] }}
                             style={[
                                 styles.media,
                                 {
                                     width: imageWidth,
-                                    borderColor: selectedItems.includes(item.uri) ? isZenMode ? '#34C759' : '#007AFF' : 'transparent',
+                                    borderColor: selectedItems.includes(item.uri) ? (isZenMode ? '#34C759' : '#007AFF') : 'transparent',
                                     borderWidth: selectedItems.includes(item.uri) ? 3 : 0,
                                 },
                             ]}
                         />
                     ) : (
                         <View style={[styles.media, { width: imageWidth, justifyContent: 'center', alignItems: 'center' }]}>
-                            <Text>
-                                <ActivityIndicator size="small" color="#fff" />
-                            </Text>
+                            <ActivityIndicator size="small" color="#fff" />
                         </View>
                     )}
                     <Ionicons
@@ -211,12 +207,11 @@ const MediaGrid = ({
             <FlatList
                 showsVerticalScrollIndicator={false}
                 data={mediaRows}
-                initialNumToRender={3} // Render a limited number of rows initially
-                maxToRenderPerBatch={2} // Render a limited number of rows per batch
-                windowSize={5} // The number of items to render offscreen
+                initialNumToRender={3}
+                maxToRenderPerBatch={2}
+                windowSize={5}
                 contentContainerStyle={styles.contentContainer}
                 ListEmptyComponent={() => <ActivityIndicator size="large" color="#007AFF" />}
-
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item: row }) => {
                     const totalMarginSpace = (row.length - 1) * imageMargin;
@@ -244,7 +239,7 @@ const MediaGrid = ({
             {/* Custom modal for image or video */}
             <CustomModal
                 isVisible={isModalVisible && selectedItem !== null}
-                mediaItem={selectedItem}  // Pass the selected media item (image or video)
+                mediaItem={selectedItem}
                 onCancel={handleCancelModal}
                 onDelete={handleDeleteMedia}
             />
@@ -271,16 +266,14 @@ const MediaGrid = ({
                             <Video
                                 source={{ uri: selectedItem.uri }}
                                 style={styles.fullScreenMedia}
-                                shouldPlay={true} // You may set it to false initially to give the user control
-                                useNativeControls={true}  // Ensure this is enabled for native controls
-                                isLooping={false}  // Disable looping if you want normal playback control
+                                shouldPlay={true}
+                                useNativeControls={true}
+                                isLooping={false}
                             />
                         )}
                     </View>
                 </PanGestureHandler>
             </Modal>
-
-
         </>
     );
 };
