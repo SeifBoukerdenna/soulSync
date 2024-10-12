@@ -1,19 +1,30 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// app/constants/Colors.ts
 
 export const Colors = {
-  purple: '#CDB4DB',
-  pink: '#FFC8DD',
-  salmon: '#FFAFCC',
-  // blue: '#A2D2FF',
-  paleBlue: '#BDE0FE',
-  lightPurple: 'rgba(55, 44, 65, 0.85)',
-  blue: '#1E90FF',
-  green: '#32CD32',
-  red: '#FF4500',
+  default: {
+    blue: '#4A90E2',
+    green: '#34C759',
+    red: '#FF3B30',
+    gray: '#8E8E93',
+    lightGray: '#F2F2F7',
+    white: '#FFFFFF',
+    black: '#000000',
+    background: '#FFFFFF',
+    text: '#000000',
+    modalBackground: '#FFFFFF',
+    buttonText: '#FFFFFF',
+  },
+  zen: {
+    blue: '#1E3A8A', // Dark Blue
+    green: '#065F46', // Dark Green
+    red: '#9B1C1C', // Dark Red
+    gray: '#2D3748', // Dark Gray
+    lightGray: '#4A5568', // Darker Gray
+    white: '#1A202C', // Off-White / Very Dark Blue-Gray
+    black: '#000000', // Remains Black
+    background: '#1A202C', // Very Dark Background
+    text: '#FFFFFF', // White Text
+    modalBackground: '#2D3748', // Dark Modal Background
+    buttonText: '#FFFFFF', // White Text on Buttons
+  },
 };

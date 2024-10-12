@@ -39,7 +39,7 @@ export default function TabsLayout() {
             />
           );
         },
-        tabBarActiveTintColor: Colors.blue,
+        tabBarActiveTintColor: Colors.default.blue,
         tabBarInactiveTintColor: '#A8A8A8',
         tabBarStyle: {
           opacity: isZenMode ? 0.1 : 1,
