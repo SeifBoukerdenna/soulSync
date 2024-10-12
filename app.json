@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "soulSync",
+    "name": "SpiritTide",
     "slug": "soulSync",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.elmelz.soulSync-app",
+      "bundleIdentifier": "com.elmelz.soulSyncApp",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to upload photos."
       }
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/images/AppIcon~ios-marketing.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.elmelz.soulSync"
+      "package": "com.elmelz.soulSyncApp"
     },
     "web": {
       "bundler": "metro",
