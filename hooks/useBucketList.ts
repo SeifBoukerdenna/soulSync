@@ -61,11 +61,11 @@ const useBucketList = () => {
         await Promise.all(promises);
 
         await AsyncStorage.setItem('isFirstLaunch', 'false');
-        Toast.show({
-          type: 'success',
-          text1: 'Welcome!',
-          text2: 'Default bucket list items have been added.',
-        });
+        // Toast.show({
+        //   type: 'success',
+        //   text1: 'Welcome!',
+        //   text2: 'Default bucket list items have been added.',
+        // });
       }
     } catch (error) {
       console.error('Error initializing bucket list:', error);

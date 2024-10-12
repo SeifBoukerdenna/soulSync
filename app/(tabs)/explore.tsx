@@ -191,7 +191,7 @@ const ExploreScreen = () => {
                 {/* Header */}
                 <View style={styles.headerContainer}>
                     <Text style={[styles.title, { color: currentColors.text }]}>
-                        Explore Media
+                        Explore Gallery
                     </Text>
                     {/* Global Loading Indicator in Header */}
                     {isFetching && (

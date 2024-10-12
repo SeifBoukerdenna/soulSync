@@ -15,6 +15,8 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@expo-google-fonts/dancing-script": "^0.2.3",
+    "@expo-google-fonts/great-vibes": "^0.2.3",
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "^2.0.0",
     "@react-native-community/slider": "^4.5.3",
@@ -28,7 +30,7 @@
     "expo-constants": "~16.0.2",
     "expo-dev-client": "~4.0.27",
     "expo-file-system": "~17.0.1",
-    "expo-font": "~12.0.9",
+    "expo-font": "~12.0.10",
     "expo-image-picker": "~15.0.7",
     "expo-linear-gradient": "~13.0.2",
     "expo-linking": "~6.3.1",
