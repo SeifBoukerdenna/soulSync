@@ -1,3 +1,5 @@
+// app/components/stars/Star.tsx
+
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { Dimensions } from 'react-native';
@@ -103,6 +105,8 @@ const Star = ({ x, y, size, isShootingStar, onShootingComplete }: StarProps) => 
                     top: isShootingStar ? shootingStarY : y,
                 },
             ]}
+            // Ensure Star does not capture any touch events
+            pointerEvents="none"
         />
     );
 };

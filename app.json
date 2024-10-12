@@ -22,7 +22,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/AppIcon~ios-marketing.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#845EC2"
       },
       "package": "com.elmelz.soulSyncApp"
     },

@@ -1,7 +1,7 @@
 // app/components/media/MediaGrid.tsx
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert, Text, ActivityIndicator } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Video } from 'expo-av';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Ionicons } from '@expo/vector-icons';

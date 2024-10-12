@@ -3,7 +3,7 @@
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/firebaseConfig';
 import { useQuery } from '@tanstack/react-query';
-import { MediaItem } from '@/app/(tabs)/explore';
+import { MediaItem } from '@/interfaces/MediaItem';
 
 const fetchMedia = async (): Promise<MediaItem[]> => {
   const imagesRef = ref(storage, 'images/');
@@ -34,6 +34,7 @@ export const useFetchMedia = () => {
     queryFn: fetchMedia,
     staleTime: 10 * 1000, // 10 seconds
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Changed to false to prevent automatic refetch on mount
+    refetchOnMount: false, // Prevent automatic refetch on mount
+    // Optional: Set to true if you want to allow refetching on background updates
   });
 };

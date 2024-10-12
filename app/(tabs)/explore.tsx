@@ -8,7 +8,6 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
-    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,20 +15,15 @@ import { useFetchMedia } from '@/hooks/useFetchMedia';
 import { useUploadMedia } from '@/hooks/useUploadMedia';
 import * as ImagePicker from 'expo-image-picker';
 import useZenModeStore from '@/stores/useZenModeStore';
-import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import MediaGrid from '@/components/media/MediaGrid';
 import ProgressBar from '@/components/misc/ProgressBar';
 import { shuffleArray } from '@/utils/shuffleArray';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
 import { useSettingsOptions } from '@/hooks/useSettingsOptions';
-import { Colors } from '@/constants/Colors'; // Import Colors directly
-import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
-import { getGradientColors } from '@/components/stars/utils'; // Import the utility
-
-export interface MediaItem {
-    uri: string;
-    type: 'image' | 'video';
-}
+import { Colors } from '@/constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getGradientColors } from '@/components/stars/utils';
+import { MediaItem } from '@/interfaces/MediaItem';
 
 const ExploreScreen = () => {
     const { data: mediaList, isLoading, isFetching, refetch } = useFetchMedia();
