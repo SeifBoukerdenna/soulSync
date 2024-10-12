@@ -34,7 +34,7 @@ export default function TabsLayout() {
           return (
             <Ionicons
               name={iconName as keyof typeof Ionicons.glyphMap}
-              size={size + 5}
+              size={size}
               color={color}
             />
           );

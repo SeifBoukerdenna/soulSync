@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     Text,
-    FlatList,
+    ScrollView,
     TouchableOpacity,
     StyleSheet,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context'; // SafeAreaView import
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import Toast from 'react-native-toast-message';
@@ -14,11 +14,10 @@ import useBucketList, { BucketItem } from '@/hooks/useBucketList';
 import BucketListItem from '@/components/bucketList/BucketListItem';
 import AddEditModal from '@/components/misc/AddEditModal';
 import useZenModeStore from '@/stores/useZenModeStore';
-import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
-import { getGradientColors } from '@/components/stars/utils'; // Import the utility
-import { useSettingsOptions } from '@/hooks/useSettingsOptions'; // Import useSettingsOptions
+import { LinearGradient } from 'expo-linear-gradient';
+import { getGradientColors } from '@/components/stars/utils';
+import { useSettingsOptions } from '@/hooks/useSettingsOptions';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
-import { shuffleArray } from '@/utils/shuffleArray';
 
 const BucketListScreen = () => {
     const {
@@ -27,32 +26,22 @@ const BucketListScreen = () => {
         editItem,
         deleteItem,
         toggleCompletion,
-        addSampleItems,
     } = useBucketList();
     const { isZenMode } = useZenModeStore();
-    const { settings } = useSettingsOptions(); // Access settings including useDynamicBackground
-    const { deleteMedia } = useDeleteMedia(); // Assuming deleteMedia is part of useBucketList
+    const { settings } = useSettingsOptions();
 
     const currentColors = useMemo(() => (isZenMode ? Colors.zen : Colors.default), [isZenMode]);
 
     const [modalVisible, setModalVisible] = useState(false);
     const [currentItem, setCurrentItem] = useState<BucketItem | null>(null);
-
-    // State for dynamic background colors
     const [gradientColors, setGradientColors] = useState<[string, string]>(getGradientColors());
 
-    // Define static background colors based on Zen Mode
     const staticBackgroundColors = useMemo(() => {
         return isZenMode
             ? [Colors.zen.background, Colors.zen.backgroundSecondary]
             : [Colors.default.background, Colors.default.backgroundSecondary];
     }, [isZenMode]);
 
-    // Initialize shuffled media when bucketItems changes
-    // Assuming shuffleArray is relevant here; otherwise, remove
-    // const shuffledBucketItems = useMemo(() => shuffleArray(bucketItems), [bucketItems]);
-
-    // Update gradient colors periodically if dynamic background is enabled
     useEffect(() => {
         let interval: NodeJS.Timeout;
 
@@ -61,10 +50,7 @@ const BucketListScreen = () => {
                 setGradientColors(getGradientColors());
             };
 
-            // Initial update
             updateGradient();
-
-            // Update every 60 seconds
             interval = setInterval(updateGradient, 60000);
         }
 
@@ -111,16 +97,6 @@ const BucketListScreen = () => {
         });
     }, [deleteItem]);
 
-    const renderItem = ({ item }: { item: BucketItem }) => (
-        <BucketListItem
-            item={item}
-            onToggleCompletion={toggleCompletion}
-            onEdit={openEditModal}
-            onDelete={handleDelete}
-            currentColors={currentColors}
-        />
-    );
-
     const renderHeader = () => (
         <View style={styles.headerContainer}>
             <Text style={[styles.headerTitle, { color: currentColors.text }]}>Bucket List</Text>
@@ -134,31 +110,42 @@ const BucketListScreen = () => {
     );
 
     return (
-        <View style={styles.container}>
-            {/* Conditional Background */}
+        <SafeAreaView style={styles.container}>
             {settings?.useDynamicBackground ? (
                 <LinearGradient colors={gradientColors as [string, string]} style={styles.gradientBackground} />
             ) : (
                 <View style={[styles.staticBackground, { backgroundColor: staticBackgroundColors[0] }]} />
             )}
 
-            {/* Overlay Content */}
-            <SafeAreaView style={styles.contentContainer}>
-                {/* Header */}
-                <FlatList
-                    data={bucketItems}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    ListHeaderComponent={renderHeader}
-                    ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
-                            <Text style={[styles.emptyText, { color: currentColors.gray }]}>No items in your bucket list.</Text>
-                        </View>
-                    }
-                    contentContainerStyle={{ flexGrow: 1 }}
+            <>
+                {renderHeader()}
+
+                <ScrollView
+                    contentContainerStyle={styles.contentContainer}
                     showsVerticalScrollIndicator={false}
-                    style={{ flex: 1 }}
-                />
+                    bounces={true}
+                    nestedScrollEnabled={true}
+                    scrollEventThrottle={16}
+                >
+                    {bucketItems.length > 0 ? (
+                        bucketItems.map((item) => (
+                            <BucketListItem
+                                key={item.id}
+                                item={item}
+                                onToggleCompletion={toggleCompletion}
+                                onEdit={openEditModal}
+                                onDelete={handleDelete}
+                                currentColors={currentColors}
+                            />
+                        ))
+                    ) : (
+                        <View style={styles.emptyContainer}>
+                            <Text style={[styles.emptyText, { color: currentColors.gray }]}>
+                                No items in your bucket list.
+                            </Text>
+                        </View>
+                    )}
+                </ScrollView>
 
                 <AddEditModal
                     visible={modalVisible}
@@ -168,8 +155,8 @@ const BucketListScreen = () => {
                     currentColors={currentColors}
                 />
                 <Toast />
-            </SafeAreaView>
-        </View>
+            </>
+        </SafeAreaView>
     );
 };
 
@@ -187,9 +174,9 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
     },
     contentContainer: {
-        flex: 1,
-        padding: 20,
-        justifyContent: 'flex-start',
+        paddingHorizontal: 5,
+        paddingBottom: 60, // Increased padding to add space at the bottom
+        flexGrow: 1,
     },
     headerContainer: {
         flexDirection: 'row',
@@ -223,15 +210,5 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         textAlign: 'center',
-    },
-    uploadButtonText: {
-        color: '#fff', // Will be overridden by dynamic color
-        fontSize: 15,
-        fontWeight: '500',
-        marginLeft: 6,
-    },
-    flatListContentEmpty: {
-        flexGrow: 1,
-        justifyContent: 'center',
     },
 });

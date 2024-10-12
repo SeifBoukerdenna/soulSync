@@ -1,5 +1,4 @@
-// app/components/bucketList/BucketListItem.tsx
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { BucketItem } from '@/hooks/useBucketList';
@@ -10,13 +9,18 @@ interface Props {
     onToggleCompletion: (item: BucketItem) => void;
     onEdit: (item: BucketItem) => void;
     onDelete: (id: string) => void;
-    currentColors: typeof Colors.default; // Adjust type as needed
+    currentColors: typeof Colors.default;
 }
 
 const BucketListItem: React.FC<Props> = ({ item, onToggleCompletion, onEdit, onDelete, currentColors }) => {
+    // Memoize the functions to prevent unnecessary re-renders
+    const handleToggleCompletion = useCallback(() => onToggleCompletion(item), [item, onToggleCompletion]);
+    const handleEdit = useCallback(() => onEdit(item), [item, onEdit]);
+    const handleDelete = useCallback(() => onDelete(item.id), [item.id, onDelete]);
+
     return (
         <View style={[styles.itemContainer, { backgroundColor: currentColors.lightGray }]}>
-            <TouchableOpacity onPress={() => onToggleCompletion(item)}>
+            <TouchableOpacity onPress={handleToggleCompletion}>
                 <Ionicons
                     name={item.completed ? 'checkbox-outline' : 'square-outline'}
                     size={24}
@@ -24,21 +28,27 @@ const BucketListItem: React.FC<Props> = ({ item, onToggleCompletion, onEdit, onD
                 />
             </TouchableOpacity>
             <View style={styles.itemTextContainer}>
-                <Text style={[styles.itemTitle, { color: currentColors.text }, item.completed && { color: currentColors.gray, textDecorationLine: 'line-through' }]}>
+                <Text
+                    style={[
+                        styles.itemTitle,
+                        { color: currentColors.text },
+                        item.completed && { color: currentColors.gray, textDecorationLine: 'line-through' }
+                    ]}
+                >
                     {item.title}
                 </Text>
-                {item.description ? (
+                {item.description && (
                     <Text style={[styles.itemDescription, { color: currentColors.gray }]}>{item.description}</Text>
-                ) : null}
+                )}
                 <Text style={[styles.itemDate, { color: currentColors.gray }]}>
                     Added on: {new Date(item.dateAdded).toLocaleDateString()}
                 </Text>
             </View>
             <View style={styles.itemActions}>
-                <TouchableOpacity onPress={() => onEdit(item)} style={styles.actionButton}>
+                <TouchableOpacity onPress={handleEdit} style={styles.actionButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Ionicons name="create-outline" size={20} color={currentColors.blue} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.actionButton}>
+                <TouchableOpacity onPress={handleDelete} style={styles.actionButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Ionicons name="trash-outline" size={20} color={currentColors.red} />
                 </TouchableOpacity>
             </View>
@@ -46,20 +56,18 @@ const BucketListItem: React.FC<Props> = ({ item, onToggleCompletion, onEdit, onD
     );
 };
 
-export default BucketListItem;
+export default React.memo(BucketListItem);
 
 const styles = StyleSheet.create({
     itemContainer: {
+        zIndex: 5,
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
         marginVertical: 6,
         borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
+        backgroundColor: Colors.default.lightGray,
+        shadowRadius: 1,
     },
     itemTextContainer: {
         flex: 1,

@@ -11,27 +11,12 @@ export type BucketItem = {
   title: string;
   description?: string;
   completed: boolean;
-  dateAdded: string; // ISO date string
+  dateAdded: string;
 };
 
-const defaultItems = [
-  { title: 'Travel to Japan', description: 'Explore Tokyo and Kyoto.' },
-  {
-    title: 'Learn to Play Guitar',
-    description: 'Take lessons and practice daily.',
-  },
-  { title: 'Start a Blog', description: 'Write about your experiences.' },
-];
+const defaultItems: any[] = [];
 
-const sampleItems = [
-  {
-    title: 'Visit the Grand Canyon',
-    description: 'Experience the vastness of nature.',
-  },
-  { title: 'Learn a New Language', description: 'Become fluent in Spanish.' },
-  { title: 'Run a Marathon', description: 'Complete a full marathon.' },
-  { title: 'Write a Book', description: 'Share your stories with the world.' },
-];
+const sampleItems: any[] = [];
 
 const useBucketList = () => {
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);

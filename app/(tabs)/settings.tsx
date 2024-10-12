@@ -1,5 +1,3 @@
-// app/components/SettingsScreen.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -9,46 +7,41 @@ import {
     ActivityIndicator,
     Switch,
     Platform,
+    ScrollView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Colors } from '@/constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useZenModeStore from '@/stores/useZenModeStore';
 import { useSettingsOptions } from '@/hooks/useSettingsOptions';
-import { getGradientColors } from '@/components/stars/utils'; // Import the utility
-import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
+import { getGradientColors } from '@/components/stars/utils';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SettingsScreen() {
     const { settings, loading, error, updateSettings } = useSettingsOptions();
     const { isZenMode } = useZenModeStore();
 
-    // Determine currentColors based on Zen Mode
     const currentColors = isZenMode ? Colors.zen : Colors.default;
 
-    // Local state for sliders and toggle
     const [localDuration, setLocalDuration] = useState<number>(1000);
     const [localStars, setLocalStars] = useState<number>(100);
     const [localMediaItems, setLocalMediaItems] = useState<number>(10);
-    const [useDynamicBackground, setUseDynamicBackground] = useState<boolean>(true); // New state
+    const [useDynamicBackground, setUseDynamicBackground] = useState<boolean>(true);
 
-    // State to handle saving status
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
 
-    // State for dynamic background colors
     const [gradientColors, setGradientColors] = useState<[string, string]>(getGradientColors());
 
-    // Initialize local state with fetched settings
     useEffect(() => {
         if (settings) {
             setLocalStars(settings.numberOfStars);
             setLocalDuration(settings.longPressDuration);
             setLocalMediaItems(settings.numberOfMediaItems);
-            setUseDynamicBackground(settings.useDynamicBackground); // Initialize toggle
+            setUseDynamicBackground(settings.useDynamicBackground);
         }
     }, [settings]);
 
-    // Handle saving settings
     const handleSave = async () => {
         setIsSaving(true);
         try {
@@ -56,7 +49,7 @@ export default function SettingsScreen() {
                 numberOfStars: localStars,
                 longPressDuration: localDuration,
                 numberOfMediaItems: localMediaItems,
-                useDynamicBackground, // Save toggle state
+                useDynamicBackground,
             });
             setIsSaved(true);
         } catch (error) {
@@ -66,7 +59,6 @@ export default function SettingsScreen() {
         }
     };
 
-    // Handle slider value changes
     const handleSliderChange = (sliderType: 'stars' | 'duration' | 'mediaItems', value: number) => {
         if (isSaved) setIsSaved(false);
         switch (sliderType) {
@@ -84,13 +76,11 @@ export default function SettingsScreen() {
         }
     };
 
-    // Handle toggle change
     const handleToggleChange = (value: boolean) => {
         setUseDynamicBackground(value);
         if (isSaved) setIsSaved(false);
     };
 
-    // Update gradient colors periodically if dynamic background is enabled
     useEffect(() => {
         let interval: NodeJS.Timeout;
 
@@ -99,10 +89,8 @@ export default function SettingsScreen() {
                 setGradientColors(getGradientColors());
             };
 
-            // Initial update
             updateGradient();
 
-            // Update every 60 seconds
             interval = setInterval(updateGradient, 60000);
         }
 
@@ -111,15 +99,12 @@ export default function SettingsScreen() {
         };
     }, [useDynamicBackground]);
 
-    // Define static background colors based on Zen Mode
     const staticBackgroundColors = isZenMode
         ? [Colors.zen.background, Colors.zen.backgroundSecondary]
         : [Colors.default.background, Colors.default.backgroundSecondary];
 
-    // Determine the background to use
     const backgroundColors = useDynamicBackground ? gradientColors : staticBackgroundColors;
 
-    // Show loading indicator while fetching settings
     if (loading) {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: currentColors.background }]}>
@@ -128,7 +113,6 @@ export default function SettingsScreen() {
         );
     }
 
-    // Show error message if fetching settings fails
     if (error) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: currentColors.background }]}>
@@ -141,20 +125,16 @@ export default function SettingsScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Conditional Background */}
             {useDynamicBackground ? (
                 <LinearGradient colors={backgroundColors as [string, string]} style={styles.gradientBackground} />
             ) : (
                 <View style={[styles.staticBackground, { backgroundColor: staticBackgroundColors[0] }]} />
             )}
 
-            {/* Overlay Content */}
-            <View style={styles.contentContainer}>
-                {/* Header */}
+            <ScrollView contentContainerStyle={styles.contentContainer}>
                 <Text style={[styles.header, { color: currentColors.text }]}>Settings</Text>
 
-                {/* Number of Stars Slider */}
-                <View style={styles.settingGroup}>
+                {/* <View style={styles.settingGroup}>
                     <Text style={[styles.label, { color: currentColors.text }]}>Number of Stars</Text>
                     <Slider
                         style={styles.slider}
@@ -167,9 +147,8 @@ export default function SettingsScreen() {
                         thumbTintColor={currentColors.blue}
                     />
                     <Text style={[styles.valueText, { color: currentColors.text }]}>{localStars}</Text>
-                </View>
+                </View> */}
 
-                {/* Zen Mode Delay Slider */}
                 <View style={styles.settingGroup}>
                     <Text style={[styles.label, { color: currentColors.text }]}>Zen Mode Delay (ms)</Text>
                     <Slider
@@ -185,7 +164,6 @@ export default function SettingsScreen() {
                     <Text style={[styles.valueText, { color: currentColors.text }]}>{localDuration} ms</Text>
                 </View>
 
-                {/* Number of Media Items Slider */}
                 <View style={styles.settingGroup}>
                     <Text style={[styles.label, { color: currentColors.text }]}>Number of Media Items</Text>
                     <Slider
@@ -201,7 +179,6 @@ export default function SettingsScreen() {
                     <Text style={[styles.valueText, { color: currentColors.text }]}>{localMediaItems}</Text>
                 </View>
 
-                {/* Dynamic Background Toggle */}
                 <View style={styles.settingGroup}>
                     <Text style={[styles.label, { color: currentColors.text }]}>Use Dynamic Background Colors</Text>
                     <Switch
@@ -209,40 +186,41 @@ export default function SettingsScreen() {
                         onValueChange={handleToggleChange}
                         trackColor={{
                             false: '#767577',
-                            true: Platform.OS === 'ios' ? undefined : '#34C759', // Use default iOS green by not setting on iOS
+                            true: Platform.OS === 'ios' ? undefined : '#34C759',
                         }}
                         thumbColor={
                             Platform.OS === 'android'
                                 ? useDynamicBackground
                                     ? currentColors.blue
                                     : '#f4f3f4'
-                                : undefined // Use default iOS thumb color
+                                : undefined
                         }
-                        ios_backgroundColor="#767577" // iOS default track color when off
+                        ios_backgroundColor="#767577"
                     />
                 </View>
-
-                {/* Save Button */}
-                <TouchableOpacity
-                    style={[
-                        styles.saveButton,
-                        (isSaved || isSaving) && styles.disabledButton,
-                        { backgroundColor: isSaved ? currentColors.green : currentColors.blue }
-                    ]}
-                    onPress={handleSave}
-                    disabled={isSaved || isSaving}
-                >
-                    {isSaving ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                        <Text style={[styles.saveButtonText, { color: '#FFFFFF' }]}>
-                            {isSaved ? '✓ Saved' : 'Save Settings'}
-                        </Text>
-                    )}
-                </TouchableOpacity>
-            </View>
+                {/* Save Button - moved outside ScrollView */}
+                <View style={styles.saveButtonContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.saveButton,
+                            (isSaved || isSaving) && styles.disabledButton,
+                            { backgroundColor: isSaved ? currentColors.green : currentColors.blue }
+                        ]}
+                        onPress={handleSave}
+                        disabled={isSaved || isSaving}
+                    >
+                        {isSaving ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                            <Text style={[styles.saveButtonText, { color: '#FFFFFF' }]}>
+                                {isSaved ? '✓ Saved' : 'Save Settings'}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
         </SafeAreaView>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -258,7 +236,7 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        padding: 20,
+        // padding: 20,
         justifyContent: 'center',
     },
     loadingContainer: {
@@ -276,36 +254,16 @@ const styles = StyleSheet.create({
         marginBottom: 30,
         padding: 15,
         borderRadius: 14,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
         elevation: 4,
-        // Changed flexDirection from 'row' to 'column' to stack label, slider, and value vertically
         flexDirection: 'column',
         alignItems: 'center',
-    },
-    toggleGroup: {
-        marginBottom: 30,
-        padding: 15,
-        borderRadius: 14,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
-        elevation: 4,
-        flexDirection: 'row',
-        alignItems: 'center',
-
-        // Added for better alignment
-        justifyContent: 'space-between',
     },
     label: {
         fontSize: 16,
         fontWeight: '500',
         marginBottom: 10,
-        textAlign: 'center', // Center the label text
-        width: '100%', // Ensure label takes full width for centering
+        textAlign: 'center',
+        width: '100%',
     },
     slider: {
         width: '100%',
@@ -316,16 +274,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 10,
     },
+    saveButtonContainer: {
+        padding: 20,
+        marginBottom: 40, // Adds padding between the button and the bottom of the page
+        alignItems: 'center', // Centers the button
+    },
     saveButton: {
+        width: '70%', // Button is narrower
         paddingVertical: 15,
         borderRadius: 14,
         alignItems: 'center',
-        marginTop: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        elevation: 4,
     },
     disabledButton: {
         backgroundColor: '#A6A6A6',
@@ -338,6 +296,6 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: 16,
         textAlign: 'center',
-        color: '#FF3B30', // Dynamic via style
+        color: '#FF3B30',
     },
 });
