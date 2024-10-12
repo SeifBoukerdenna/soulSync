@@ -1,3 +1,5 @@
+// app/hooks/useSettingsOptions.ts
+
 import { useEffect, useState } from 'react';
 import { ref, onValue, set } from 'firebase/database';
 import { database } from '@/firebaseConfig';
@@ -7,6 +9,7 @@ export interface Settings {
   numberOfStars: number;
   longPressDuration: number;
   numberOfMediaItems: number;
+  useDynamicBackground: boolean; // New setting
 }
 
 export const useSettingsOptions = () => {
@@ -26,12 +29,14 @@ export const useSettingsOptions = () => {
             numberOfStars: data.numberOfStars,
             longPressDuration: data.longPressDuration,
             numberOfMediaItems: data.numberOfMediaItems,
+            useDynamicBackground: data.useDynamicBackground, // Read new setting
           });
         } else {
           const defaultSettings: Settings = {
             numberOfStars: 100,
             longPressDuration: 1000,
             numberOfMediaItems: 10,
+            useDynamicBackground: true, // Default value
           };
           setSettings(defaultSettings);
           set(settingsRef, defaultSettings).catch(err => {

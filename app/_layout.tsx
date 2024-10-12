@@ -1,13 +1,18 @@
+// app/components/RootLayout.tsx
+
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet, Alert, Platform, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useZenModeStore from '@/stores/useZenModeStore';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
+import { useSettingsOptions } from '@/hooks/useSettingsOptions'; // Import the custom hook
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/Colors';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,12 +20,31 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const { isZenMode, setZenMode, longPressDuration, initializeZenMode } = useZenModeStore();
+  const { settings, loading: settingsLoading, error: settingsError } = useSettingsOptions(); // Access settings
   const [showMessage, setShowMessage] = useState<string | null>(null);
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
+  // Initialize Zen Mode settings from Firebase on app start
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+
+    initializeZenMode();
+  }, [loaded]);
+
+  // Handle long press to toggle Zen Mode
   const handleLongPress = () => {
+    if (settings?.useDynamicBackground) {
+      Alert.alert(
+        "Cannot Change Zen Mode",
+        "Please disable 'Use Dynamic Background Colors' before changing Zen Mode."
+      );
+      return;
+    }
+
     const newZenMode = !isZenMode;
     setZenMode(newZenMode);
     setShowMessage(newZenMode ? 'Zen Mode Active' : 'Zen Mode Deactivated');
@@ -30,17 +54,24 @@ export default function RootLayout() {
     }, 2000);
   };
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+  // Show loading indicator while fonts or settings are loading
+  if (!loaded || settingsLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: Colors.default.background }]}>
+        <ActivityIndicator size="large" color={Colors.default.blue} />
+      </View>
+    );
+  }
 
-    // Initialize Zen Mode settings from Firebase on app start
-    initializeZenMode();
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
+  // Show error message if fetching settings fails
+  if (settingsError) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: Colors.default.background }]}>
+        <Text style={[styles.errorText, { color: Colors.default.red }]}>
+          Error loading settings: {settingsError}
+        </Text>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -101,5 +132,19 @@ const styles = StyleSheet.create({
   zenText: {
     color: '#fff',
     fontSize: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#FF3B30',
   },
 });

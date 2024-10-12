@@ -1,5 +1,7 @@
+// app/components/ExploreScreen.tsx
+
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchMedia } from '@/hooks/useFetchMedia';
@@ -12,6 +14,9 @@ import ProgressBar from '@/components/misc/ProgressBar';
 import { shuffleArray } from '@/utils/shuffleArray';
 import { useDeleteMedia } from '@/hooks/useDeleteMedia';
 import { useSettingsOptions } from '@/hooks/useSettingsOptions';
+import { Colors } from '@/constants/Colors'; // Import Colors directly
+import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
+import { getGradientColors } from '@/components/stars/utils'; // Import the utility
 
 export interface MediaItem {
     uri: string;
@@ -30,6 +35,18 @@ const ExploreScreen = () => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
+    // State for dynamic background colors
+    const [gradientColors, setGradientColors] = useState<[string, string]>(getGradientColors());
+
+    // Determine currentColors based on Zen Mode
+    const currentColors = isZenMode ? Colors.zen : Colors.default;
+
+    // Define static background colors based on Zen Mode
+    const staticBackgroundColors = isZenMode
+        ? [Colors.zen.background, Colors.zen.backgroundSecondary]
+        : [Colors.default.background, Colors.default.backgroundSecondary];
+
+    // Initialize shuffled media when mediaList changes
     const shuffleAndSetMedia = useCallback((media: MediaItem[]) => {
         const shuffled = shuffleArray(media);
         setShuffledMedia(shuffled);
@@ -45,8 +62,6 @@ const ExploreScreen = () => {
     const limitedMediaList = useMemo(() => {
         return shuffledMedia?.slice(0, settings?.numberOfMediaItems);
     }, [shuffledMedia, settings?.numberOfMediaItems]);
-
-    console.log('limitedMediaList:', limitedMediaList.length);
 
     const handlePickAndUploadMedia = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -142,108 +157,142 @@ const ExploreScreen = () => {
         );
     }, [limitedMediaList, isLoading, isFetching, refetch, gridKey, isSelectionMode, selectedItems]);
 
+    // Update gradient colors periodically if dynamic background is enabled
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        if (settings?.useDynamicBackground) {
+            const updateGradient = () => {
+                setGradientColors(getGradientColors());
+            };
+
+            // Initial update
+            updateGradient();
+
+            // Update every 60 seconds
+            interval = setInterval(updateGradient, 60000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [settings?.useDynamicBackground]);
+
     return (
-        <SafeAreaView style={[styles.container, isZenMode && styles.zenMode]}>
-            <View>
-                <Text style={[styles.title, isZenMode && styles.zenModeTitle]}>
+        <SafeAreaView style={styles.container}>
+            {/* Conditional Background */}
+            {settings?.useDynamicBackground ? (
+                <LinearGradient colors={gradientColors as [string, string]} style={styles.gradientBackground} />
+            ) : (
+                <View style={[styles.staticBackground, { backgroundColor: staticBackgroundColors[0] }]} />
+            )}
+
+            {/* Overlay Content */}
+            <View style={styles.contentContainer}>
+                {/* Header */}
+                <Text style={[styles.title, { color: currentColors.text }]}>
                     Explore Media
                 </Text>
 
+                {/* Action Buttons */}
                 <View style={styles.buttonsContainer}>
                     <TouchableOpacity
                         onPress={handlePickAndUploadMedia}
-                        style={[styles.uploadButton, isZenMode && styles.zenModeButton]}
+                        style={[styles.uploadButton, { backgroundColor: currentColors.blue }]}
                     >
-                        <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
-                        <Text style={styles.uploadButtonText}>Upload</Text>
+                        <Ionicons name="cloud-upload-outline" size={20} color={currentColors.buttonText} />
+                        <Text style={[styles.uploadButtonText, { color: currentColors.buttonText }]}>Upload</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={handleRefetchMedia}
-                        style={[styles.uploadButton, isZenMode && styles.zenModeButton]}
+                        style={[styles.uploadButton, { backgroundColor: currentColors.blue }]}
                     >
-                        <Ionicons name="refresh-outline" size={20} color="#fff" />
-                        <Text style={styles.uploadButtonText}>Refresh</Text>
+                        <Ionicons name="refresh-outline" size={20} color={currentColors.buttonText} />
+                        <Text style={[styles.uploadButtonText, { color: currentColors.buttonText }]}>Refresh</Text>
                     </TouchableOpacity>
                 </View>
 
+                {/* Selection Mode Buttons */}
                 <View style={styles.selectButtonContainer}>
                     {isSelectionMode ? (
                         <>
                             <TouchableOpacity
                                 onPress={handleDeleteSelected}
-                                style={[styles.deleteButton, isZenMode && styles.zenModeButton]}
+                                style={[styles.deleteButton, { backgroundColor: currentColors.red }]}
                             >
-                                <Ionicons name="trash-outline" size={20} color="#fff" />
-                                <Text style={styles.uploadButtonText}>Delete</Text>
+                                <Ionicons name="trash-outline" size={20} color={currentColors.buttonText} />
+                                <Text style={[styles.uploadButtonText, { color: currentColors.buttonText }]}>Delete</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleCancelSelection}
-                                style={[styles.cancelButton, isZenMode && styles.zenModeButton]}
+                                style={[styles.cancelButton, { backgroundColor: currentColors.gray }]}
                             >
-                                <Ionicons name="close-outline" size={20} color="#fff" />
-                                <Text style={styles.uploadButtonText}>Cancel</Text>
+                                <Ionicons name="close-outline" size={20} color={currentColors.buttonText} />
+                                <Text style={[styles.uploadButtonText, { color: currentColors.buttonText }]}>Cancel</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
                         <TouchableOpacity
                             onPress={handleSelectionModeToggle}
-                            style={[styles.selectButton, isZenMode && styles.zenModeButton]}
+                            style={[styles.selectButton, { backgroundColor: currentColors.green }]}
                         >
-                            <Ionicons name="checkbox-outline" size={20} color="#fff" />
-                            <Text style={styles.uploadButtonText}>Select</Text>
+                            <Ionicons name="checkbox-outline" size={20} color={currentColors.buttonText} />
+                            <Text style={[styles.uploadButtonText, { color: currentColors.buttonText }]}>Select</Text>
                         </TouchableOpacity>
                     )}
                 </View>
-            </View>
 
-            {progress > 0 && <ProgressBar progress={progress} />}
+                {/* Progress Bar */}
+                {progress > 0 && <ProgressBar progress={progress} />}
 
-            <View style={styles.gridContainer}>
-                {mediaGrid}
-                {isFetching && (
-                    <View style={styles.loadingOverlay}>
-                        <LoadingSpinner />
-                    </View>
-                )}
+                {/* Media Grid */}
+                <View style={styles.gridContainer}>
+                    {mediaGrid}
+                    {isFetching && (
+                        <View style={styles.loadingOverlay}>
+                            <LoadingSpinner />
+                        </View>
+                    )}
+                </View>
             </View>
         </SafeAreaView>
     );
+
 };
+
+export default ExploreScreen;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F0F0F5',
+        position: 'relative',
     },
-    zenMode: {
-        backgroundColor: '#1C1C1E',
+    gradientBackground: {
+        ...StyleSheet.absoluteFillObject,
     },
-    gridContainer: {
+    staticBackground: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    contentContainer: {
         flex: 1,
-        marginTop: 20,
-        marginBottom: 20,
+        padding: 20,
+        justifyContent: 'flex-start',
     },
     title: {
         fontSize: 24,
         fontWeight: '600',
-        color: '#333',
+        color: '#333', // Will be overridden by dynamic color
         marginBottom: 10,
         textAlign: 'center',
     },
-    zenModeTitle: {
-        color: '#E5E5EA',
-        fontWeight: '400',
-    },
     buttonsContainer: {
-        paddingHorizontal: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 20,
     },
     selectButtonContainer: {
-        paddingHorizontal: 20,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -251,7 +300,6 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     uploadButton: {
-        backgroundColor: '#007AFF',
         flexDirection: 'row',
         paddingVertical: 12,
         paddingHorizontal: 16,
@@ -266,7 +314,6 @@ const styles = StyleSheet.create({
         flex: 0.45,
     },
     selectButton: {
-        backgroundColor: '#34C759',
         flexDirection: 'row',
         paddingVertical: 12,
         paddingHorizontal: 16,
@@ -281,7 +328,6 @@ const styles = StyleSheet.create({
         flex: 0.45,
     },
     deleteButton: {
-        backgroundColor: '#FF3B30',
         flexDirection: 'row',
         paddingVertical: 12,
         paddingHorizontal: 16,
@@ -296,7 +342,6 @@ const styles = StyleSheet.create({
         flex: 0.45,
     },
     cancelButton: {
-        backgroundColor: '#FF9500',
         flexDirection: 'row',
         paddingVertical: 12,
         paddingHorizontal: 16,
@@ -310,11 +355,8 @@ const styles = StyleSheet.create({
         elevation: 3,
         flex: 0.45,
     },
-    zenModeButton: {
-        backgroundColor: '#34C759',
-    },
     uploadButtonText: {
-        color: '#fff',
+        color: '#fff', // Will be overridden by dynamic color
         fontSize: 15,
         fontWeight: '500',
         marginLeft: 6,
@@ -325,6 +367,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent overlay
     },
+    gridContainer: {
+        flex: 1,
+        marginTop: 20,
+        marginBottom: 20,
+    },
 });
-
-export default ExploreScreen;

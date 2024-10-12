@@ -10,6 +10,7 @@ export const Colors = {
     white: '#FFFFFF',
     black: '#000000',
     background: '#FFFFFF',
+    backgroundSecondary: '#F2F2F7', // Added for gradient backgrounds
     text: '#000000',
     modalBackground: '#FFFFFF',
     buttonText: '#FFFFFF',
@@ -23,6 +24,7 @@ export const Colors = {
     white: '#1A202C', // Off-White / Very Dark Blue-Gray
     black: '#000000', // Remains Black
     background: '#1A202C', // Very Dark Background
+    backgroundSecondary: '#2D3748', // Added for gradient backgrounds
     text: '#FFFFFF', // White Text
     modalBackground: '#2D3748', // Dark Modal Background
     buttonText: '#FFFFFF', // White Text on Buttons

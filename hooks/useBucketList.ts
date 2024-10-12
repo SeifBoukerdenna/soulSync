@@ -152,7 +152,10 @@ const useBucketList = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Proceed to delete the item from Firebase
               await remove(ref(database, `bucketList/${id}`));
+
+              // Show the success toast only after the item is deleted
               Toast.show({
                 type: 'success',
                 text1: 'Item Deleted',
