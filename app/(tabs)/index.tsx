@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Star from '@/components/stars/Star';
 import { generateStarsFromMessage, getGradientColors } from '@/components/stars/utils';
 import { LinearGradient } from 'expo-linear-gradient';
-import useStarsStore from '@/stores/useStarsStore';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,12 +28,11 @@ const starMessage = [
 ];
 
 export default function StarsScreen() {
-  const { numberOfStars } = useStarsStore();
   const [gradientColors, setGradientColors] = useState<[string, string]>(getGradientColors());
   const [modalVisible, setModalVisible] = useState(false);
   const [scaleValue] = useState(new Animated.Value(1));
 
-  const stars = useMemo(() => generateStarsFromMessage(starMessage), [numberOfStars]);
+  const stars = useMemo(() => generateStarsFromMessage(starMessage), []);
 
   useEffect(() => {
     const updateGradient = () => {
